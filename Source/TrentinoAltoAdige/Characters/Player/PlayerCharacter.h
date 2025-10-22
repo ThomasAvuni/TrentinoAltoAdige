@@ -27,9 +27,29 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	//Default mapping context
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* InputMappingContext;
 
+	UPROPERTY(EditAnywhere)
+	class UCameraComponent* CameraComponent;
+
+	UPROPERTY(EditAnywhere)
+	class USpringArmComponent* CameraBoom;
+
+private:
+	//Input actions
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Mappings")
+	UInputAction* MoveAction;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Mappings")
+	UInputAction* LookUp;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Mappings")
+	UInputAction* LookRight;
+
+	//Functions
+	void Move(const FInputActionValue& InputValue);
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

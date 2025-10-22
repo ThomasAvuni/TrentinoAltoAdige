@@ -3,12 +3,28 @@
 
 #include "PlayerCharacter.h"
 
+#include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 500.f);
+	bUseControllerRotationYaw = false;
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>("Camera Boom");
+	CameraBoom->SetupAttachment(GetMesh());
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->TargetArmLength = 300.f;
+	CameraBoom->bEnableCameraLag = true;
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>("Camera");
+	CameraComponent->SetupAttachment(CameraBoom);
+	CameraComponent->AttachToComponent(CameraBoom, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 // Called when the game starts or when spawned
@@ -26,7 +42,6 @@ void APlayerCharacter::BeginPlay()
 			}
 		}
 	}
-	
 }
 
 // Called every frame
@@ -41,5 +56,26 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
+	}
+	
 }
 
+void APlayerCharacter::Move(const FInputActionValue& InputValue)
+{
+	FVector2D InputVector = InputValue.Get<FVector2D>();
+
+	if (Controller)
+	{
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
+
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		AddMovementInput(ForwardDirection, InputVector.X);
+		AddMovementInput(RightDirection, InputVector.Y);
+	}
+}
