@@ -43,17 +43,12 @@ private:
 	UInputAction* MoveAction;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input | Mappings")
-	UInputAction* LookUp;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Input | Mappings")
-	UInputAction* LookRight;
+	UInputAction* LookAction;
 
-	//Functions
+	//Functions | Movement
 	void Move(const FInputActionValue& InputValue);
+	void Look(const FInputActionValue& InputValue);
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
