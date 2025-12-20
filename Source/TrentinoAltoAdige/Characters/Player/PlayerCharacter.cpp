@@ -6,6 +6,9 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
+#include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -27,6 +30,9 @@ APlayerCharacter::APlayerCharacter()
 	CameraComponent->AttachToComponent(CameraBoom, FAttachmentTransformRules::KeepRelativeTransform);
 	CameraBoom->bEnableCameraRotationLag = true;
 	CameraBoom->CameraRotationLagSpeed = 25.f;
+	
+	//CombatComp
+	CombatSystemComponent = CreateDefaultSubobject<UCombatSystemComponent>("CombatSysComp");
 }
 
 // Called when the game starts or when spawned

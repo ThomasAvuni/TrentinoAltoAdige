@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
 
 #include "PlayerCharacter.generated.h"
 
@@ -15,7 +15,7 @@ class UInputAction;
 class UInputComponent;
 
 UCLASS()
-class TRENTINOALTOADIGE_API APlayerCharacter : public ACharacter
+class TRENTINOALTOADIGE_API APlayerCharacter : public ACharacter, public IGetComponentInterface
 {
 	GENERATED_BODY()
 
@@ -36,7 +36,10 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	class USpringArmComponent* CameraBoom;
-
+	
+	//Components
+	UPROPERTY(EditDefaultsOnly, Category = "Components | Combat")
+	UCombatSystemComponent* CombatSystemComponent;
 private:
 	//Input actions
 	UPROPERTY(EditDefaultsOnly, Category = "Input | Mappings")
@@ -52,4 +55,6 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	//Interfaces
+	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 };
