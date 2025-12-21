@@ -40,4 +40,18 @@ public:
 
 	//Interfaces
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
+	
+protected:
+	UFUNCTION(BlueprintCallable)
+	void BP_StartSprint();
+	UFUNCTION(BlueprintCallable)
+	void BP_StopSprint();
+	
+	//Weapon
+	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
+	TObjectPtr<class AWeaponBase> CurrentWeapon;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	TSubclassOf<AWeaponBase> WeaponClass;
 };
+

@@ -2,13 +2,10 @@
 
 
 #include "PlayerCharacter.h"
-
-#include "Camera/CameraComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
+#include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -35,6 +32,15 @@ void APlayerCharacter::BeginPlay()
 			}
 		}
 	}
+
+	if (WeaponClass)
+	{
+		FActorSpawnParameters params;
+		params.Owner = this;
+		CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, params);
+		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
+	}
+	
 }
 
 // Called to bind functionality to input
@@ -44,6 +50,20 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
+		
 	}
 	
 }
+
+#pragma region Sprint
+/*? Sprint */
+void APlayerCharacter::BP_StartSprint()
+{
+	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordBackSocket"));
+}
+
+void APlayerCharacter::BP_StopSprint()
+{
+	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
+}
+#pragma endregion
