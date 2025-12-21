@@ -31,26 +31,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* InputMappingContext;
 
-	UPROPERTY(EditAnywhere)
-	class UCameraComponent* CameraComponent;
-
-	UPROPERTY(EditAnywhere)
-	class USpringArmComponent* CameraBoom;
-	
 	//Components
 	UPROPERTY(EditDefaultsOnly, Category = "Components | Combat")
 	UCombatSystemComponent* CombatSystemComponent;
-private:
-	//Input actions
-	UPROPERTY(EditDefaultsOnly, Category = "Input | Mappings")
-	UInputAction* MoveAction;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Input | Mappings")
-	UInputAction* LookAction;
-
-	//Functions | Movement
-	void Move(const FInputActionValue& InputValue);
-	void Look(const FInputActionValue& InputValue);
 public:	
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

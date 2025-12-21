@@ -44,6 +44,10 @@
 		{
 			"Name": "AnimationLocomotionLibrary",
 			"Enabled": true
+		},
+		{
+			"Name": "Mover",
+			"Enabled": true
 		}
 	]
 }
