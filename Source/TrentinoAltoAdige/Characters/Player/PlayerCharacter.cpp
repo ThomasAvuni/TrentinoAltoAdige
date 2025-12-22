@@ -38,7 +38,7 @@ void APlayerCharacter::BeginPlay()
 		FActorSpawnParameters params;
 		params.Owner = this;
 		CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, params);
-		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
+		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordBackSocket"));
 	}
 	
 }
@@ -50,20 +50,35 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		
+		EnhancedInputComponent->BindAction(ToggleWeaponAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleWeapon);
 	}
+}
+
+#pragma region Weapon
+void APlayerCharacter::ToggleWeapon()
+{
+	if (bIsSprinting)
+		return;
 	
+	if (bIsWeaponEquipped)
+	{
+		UnEquipWeapon();
+		return;
+	}
+	EquipWeapon();
 }
 
-#pragma region Sprint
-/*? Sprint */
-void APlayerCharacter::BP_StartSprint()
+void APlayerCharacter::EquipWeapon()
 {
-	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordBackSocket"));
+		bIsWeaponEquipped = true;
+		if (UnEquipFromHandWeapon)
+			GetMesh()->GetAnimInstance()->Montage_Play(EquipFromBackWeapon);
 }
 
-void APlayerCharacter::BP_StopSprint()
+void APlayerCharacter::UnEquipWeapon()
 {
-	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
+	bIsWeaponEquipped = false;
+	if (EquipFromBackWeapon)
+		GetMesh()->GetAnimInstance()->Montage_Play(UnEquipFromHandWeapon);
 }
 #pragma endregion

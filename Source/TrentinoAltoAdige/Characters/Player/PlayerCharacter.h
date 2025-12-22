@@ -31,6 +31,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* InputMappingContext;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
+	UInputAction* ToggleWeaponAction;
 	//Components
 	UPROPERTY(EditDefaultsOnly, Category = "Components | Combat")
 	UCombatSystemComponent* CombatSystemComponent;
@@ -42,16 +44,38 @@ public:
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	
 protected:
-	UFUNCTION(BlueprintCallable)
-	void BP_StartSprint();
-	UFUNCTION(BlueprintCallable)
-	void BP_StopSprint();
-	
-	//Weapon
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bIsSprinting = false;
+	//?Weapon | Vars
 	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<class AWeaponBase> CurrentWeapon;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<AWeaponBase> WeaponClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool bIsWeaponEquipped = false;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool bCanEquipWeapon = true;
+	
+	/*?Weapons | Functions*/
+	UFUNCTION(BlueprintCallable)
+	void ToggleWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void EquipWeapon();
+	
+	UFUNCTION(BlueprintCallable)
+	void UnEquipWeapon();
+	
+	/*?Animations*/
+	TObjectPtr<UAnimInstance> AnimInstance;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
+	TObjectPtr<UAnimMontage> EquipFromBackWeapon;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
+	TObjectPtr<UAnimMontage> UnEquipFromHandWeapon;
 };
 
