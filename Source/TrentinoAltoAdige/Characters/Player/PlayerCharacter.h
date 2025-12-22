@@ -58,6 +58,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
 	bool bCanEquipWeapon = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool bIsEquippingWeapon = false;
 	
 	/*?Weapons | Functions*/
 	UFUNCTION(BlueprintCallable)
@@ -71,6 +74,9 @@ protected:
 	
 	/*?Animations*/
 	TObjectPtr<UAnimInstance> AnimInstance;
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponUnEquipped);
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponUnEquipped OnWeaponUnEquipped;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
 	TObjectPtr<UAnimMontage> EquipFromBackWeapon;

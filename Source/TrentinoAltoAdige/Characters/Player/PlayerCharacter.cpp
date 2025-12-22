@@ -35,11 +35,14 @@ void APlayerCharacter::BeginPlay()
 
 	if (WeaponClass)
 	{
+		//Spawnare nel mondo l'arma, e aggangiarla al personaggio
 		FActorSpawnParameters params;
 		params.Owner = this;
 		CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, params);
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordBackSocket"));
 	}
+
+	AnimInstance = GetMesh()->GetAnimInstance();
 	
 }
 
@@ -57,28 +60,49 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 #pragma region Weapon
 void APlayerCharacter::ToggleWeapon()
 {
-	if (bIsSprinting)
+	//Se stiamo sprintando, non facciamo nulla
+	if (bIsSprinting || bIsEquippingWeapon)
 		return;
 	
-	if (bIsWeaponEquipped)
+	//Se NON si è già equipaggiata l'arma, si equipaggia e esce dalla funzinoe
+	if (!bIsWeaponEquipped)
 	{
-		UnEquipWeapon();
+		EquipWeapon();
 		return;
 	}
-	EquipWeapon();
+	//Se è già equipaggiata si rimette dietro il personaggio
+	UnEquipWeapon();
 }
 
 void APlayerCharacter::EquipWeapon()
 {
-		bIsWeaponEquipped = true;
 		if (UnEquipFromHandWeapon)
-			GetMesh()->GetAnimInstance()->Montage_Play(EquipFromBackWeapon);
+		{
+			bIsWeaponEquipped = true;
+			bIsEquippingWeapon = true;
+			AnimInstance->Montage_Play(EquipFromBackWeapon);
+			FOnMontageEnded OnMontageEnded;
+			OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
+			{
+				bIsEquippingWeapon = false;
+			});
+			AnimInstance->Montage_SetEndDelegate(OnMontageEnded, EquipFromBackWeapon);
+		}
 }
 
 void APlayerCharacter::UnEquipWeapon()
 {
-	bIsWeaponEquipped = false;
 	if (EquipFromBackWeapon)
-		GetMesh()->GetAnimInstance()->Montage_Play(UnEquipFromHandWeapon);
+	{
+		AnimInstance->Montage_Play(UnEquipFromHandWeapon);
+		bIsEquippingWeapon = true;
+		FOnMontageEnded OnMontageEnded;
+		OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
+		{
+			bIsEquippingWeapon = false;
+			OnWeaponUnEquipped.Broadcast();
+		});
+		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, UnEquipFromHandWeapon);
+	}
 }
 #pragma endregion
