@@ -54,6 +54,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		EnhancedInputComponent->BindAction(ToggleWeaponAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleWeapon);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &APlayerCharacter::Attack);
 	}
 }
 
@@ -67,20 +68,18 @@ void APlayerCharacter::ToggleWeapon()
 	//Se NON si è già equipaggiata l'arma, si equipaggia e esce dalla funzinoe
 	if (!bIsWeaponEquipped)
 	{
-		EquipWeapon();
+		InternalEquipWeapon();
 		return;
 	}
 	//Se è già equipaggiata si rimette dietro il personaggio
-	UnEquipWeapon();
+	InternalUnEquipWeapon();
 }
 
-void APlayerCharacter::EquipWeapon()
+void APlayerCharacter::InternalEquipWeapon()
 {
 	// Verifica che sia l'istanza di animazione che l'asset del montage siano validi
 	if (AnimInstance && EquipFromBackWeapon)
 	{
-		// Aggiorna lo stato logico: l'arma è ora considerata equipaggiata
-		bIsWeaponEquipped = true;
 		// Attiva il flag di occupazione per impedire altre azioni durante l'animazione
 		bIsEquippingWeapon = true;
 		// Avvia la riproduzione dell'animazione di equipaggiamento dalla schiena
@@ -93,13 +92,15 @@ void APlayerCharacter::EquipWeapon()
 		{
 		   // L'animazione è terminata o interrotta: sblocca lo stato del personaggio
 		   bIsEquippingWeapon = false;
+			// Aggiorna lo stato logico: l'arma è ora considerata equipaggiata
+			bIsWeaponEquipped = true;
 		});
 		// Associa formalmente il delegate al montage specifico appena avviato
 		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, EquipFromBackWeapon);
 	}
 }
 
-void APlayerCharacter::UnEquipWeapon()
+void APlayerCharacter::InternalUnEquipWeapon()
 {
 	//Verifica che l'asset del Montage (l'animazione) sia valido prima di procedere
 	if (AnimInstance && UnEquipFromHandWeapon)
@@ -124,5 +125,10 @@ void APlayerCharacter::UnEquipWeapon()
 		//Registra il delegate appena creato specificamente per questo Montage
 		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, UnEquipFromHandWeapon);
 	}
+}
+
+void APlayerCharacter::Attack()
+{
+	CombatSystemComponent->Attack();
 }
 #pragma endregion

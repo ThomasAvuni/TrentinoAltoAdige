@@ -20,9 +20,9 @@ public:
 	UFUNCTION()
 	void AnimNotify_UnEquipWeapon();
 	UFUNCTION()
-	void AnimNotify_SaveCombo();
+	void AnimNotify_SaveAttack();
 	UFUNCTION()
-	void AnimNotify_RestCombo();
+	void AnimNotify_ResetCombo();
 protected:
 	virtual void NativeBeginPlay() override;
 	IGetComponentInterface* OwnerRef;

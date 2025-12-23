@@ -3,6 +3,7 @@
 
 #include "CombatSystemComponent.h"
 
+#include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Characters/CharacterAnimInstance.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
@@ -27,7 +28,9 @@ void UCombatSystemComponent::BeginPlay()
 
 void UCombatSystemComponent::Attack()
 {
-	if (bIsAttacking) return;
+	if (!OwnerRef->IsWeaponEquipped()) return;
+	
+	if (bIsAttacking && !bSaveCombo) return;
 	
 	if (OwnerRef)
 	{
@@ -40,12 +43,17 @@ void UCombatSystemComponent::Attack()
 				if (UAnimMontage* AttackMontage = ComboAttacks[CurrentAttackIndex].AttackMontage)
 				{
 					bIsAttacking = true;
+					bSaveCombo = false;
 					AnimInstance->Montage_Play(AttackMontage);
 					AttackIndex++;
 				}
 			}
 		}
 	}
+}
+
+void UCombatSystemComponent::PerformTrace()
+{
 }
 
 void UCombatSystemComponent::SaveCombo()
@@ -57,5 +65,6 @@ void UCombatSystemComponent::SaveCombo()
 void UCombatSystemComponent::ResetCombo()
 {
 	bSaveCombo = false;
+	bIsAttacking = false;
 	AttackIndex = 0;
 }

@@ -24,4 +24,7 @@ class TRENTINOALTOADIGE_API ICombatInterface
 public:
 	virtual class AWeaponBase* GetWeapon() const = 0;
 	virtual USkeletalMeshComponent* GetCharacterMesh() const = 0;
+	virtual bool IsWeaponEquipped() const = 0;
+	virtual void EquipWeapon() = 0;
+	virtual void UnEquipWeapon() = 0;
 };

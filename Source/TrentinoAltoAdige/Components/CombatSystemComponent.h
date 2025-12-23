@@ -21,10 +21,12 @@ public:
 	bool IsAttacking() const {return bIsAttacking;}
 	void SaveCombo();
 	void ResetCombo();
+	void Attack();
+	void PerformTrace();
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-	void Attack();
 private:
 	ICombatInterface* OwnerRef;
 	int32 AttackIndex = 0;

@@ -34,6 +34,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
 	UInputAction* ToggleWeaponAction;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
+	UInputAction* AttackAction;
 	//Components
 	UPROPERTY(EditDefaultsOnly, Category = "Components | Combat")
 	UCombatSystemComponent* CombatSystemComponent;
@@ -45,7 +48,9 @@ public:
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual class AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
 	virtual USkeletalMeshComponent* GetCharacterMesh() const override {return GetMesh();}
-	
+	virtual void EquipWeapon() override {InternalEquipWeapon();}
+	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
+	virtual bool IsWeaponEquipped() const override {return bIsWeaponEquipped;}
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsSprinting = false;
@@ -70,11 +75,13 @@ protected:
 	void ToggleWeapon();
 
 	UFUNCTION(BlueprintCallable)
-	void EquipWeapon();
+	void InternalEquipWeapon();
 	
 	UFUNCTION(BlueprintCallable)
-	void UnEquipWeapon();
+	void InternalUnEquipWeapon();
 
+	void Attack();
+	
 public:	AWeaponBase* GetCurrentWeapon() {return CurrentWeapon;}	
 protected:
 	

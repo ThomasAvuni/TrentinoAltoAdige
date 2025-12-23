@@ -3,6 +3,7 @@
 
 #include "CharacterAnimInstance.h"
 
+#include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
@@ -30,13 +31,13 @@ void UCharacterAnimInstance::AnimNotify_UnEquipWeapon()
 	}
 }
 
-void UCharacterAnimInstance::AnimNotify_SaveCombo()
+void UCharacterAnimInstance::AnimNotify_SaveAttack()
 {
 	if (OwnerRef)
 		OwnerRef->GetCombatSystemComponent()->SaveCombo();
 }
 
-void UCharacterAnimInstance::AnimNotify_RestCombo()
+void UCharacterAnimInstance::AnimNotify_ResetCombo()
 {
 	if (OwnerRef)
 		OwnerRef->GetCombatSystemComponent()->ResetCombo();
