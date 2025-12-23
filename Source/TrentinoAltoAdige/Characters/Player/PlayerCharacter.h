@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
 
 #include "PlayerCharacter.generated.h"
@@ -15,7 +16,7 @@ class UInputAction;
 class UInputComponent;
 
 UCLASS()
-class TRENTINOALTOADIGE_API APlayerCharacter : public ACharacter, public IGetComponentInterface
+class TRENTINOALTOADIGE_API APlayerCharacter : public ACharacter, public IGetComponentInterface, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -40,8 +41,10 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	//Interfaces
+	//?Interfaces
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
+	virtual class AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
+	virtual USkeletalMeshComponent* GetCharacterMesh() const override {return GetMesh();}
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
@@ -71,6 +74,9 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void UnEquipWeapon();
+
+public:	AWeaponBase* GetCurrentWeapon() {return CurrentWeapon;}	
+protected:
 	
 	/*?Animations*/
 	TObjectPtr<UAnimInstance> AnimInstance;

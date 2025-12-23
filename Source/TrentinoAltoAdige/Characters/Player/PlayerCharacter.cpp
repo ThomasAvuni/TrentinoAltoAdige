@@ -76,32 +76,52 @@ void APlayerCharacter::ToggleWeapon()
 
 void APlayerCharacter::EquipWeapon()
 {
-		if (UnEquipFromHandWeapon)
+	// Verifica che sia l'istanza di animazione che l'asset del montage siano validi
+	if (AnimInstance && EquipFromBackWeapon)
+	{
+		// Aggiorna lo stato logico: l'arma è ora considerata equipaggiata
+		bIsWeaponEquipped = true;
+		// Attiva il flag di occupazione per impedire altre azioni durante l'animazione
+		bIsEquippingWeapon = true;
+		// Avvia la riproduzione dell'animazione di equipaggiamento dalla schiena
+		AnimInstance->Montage_Play(EquipFromBackWeapon);
+		// Dichiarazione del delegate per intercettare la fine del montage
+		FOnMontageEnded OnMontageEnded;
+		// Definizione della logica da eseguire al termine dell'animazione tramite Lambda
+		// Viene catturato 'this' per poter accedere alle variabili della classe
+		OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
 		{
-			bIsWeaponEquipped = true;
-			bIsEquippingWeapon = true;
-			AnimInstance->Montage_Play(EquipFromBackWeapon);
-			FOnMontageEnded OnMontageEnded;
-			OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
-			{
-				bIsEquippingWeapon = false;
-			});
-			AnimInstance->Montage_SetEndDelegate(OnMontageEnded, EquipFromBackWeapon);
-		}
+		   // L'animazione è terminata o interrotta: sblocca lo stato del personaggio
+		   bIsEquippingWeapon = false;
+		});
+		// Associa formalmente il delegate al montage specifico appena avviato
+		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, EquipFromBackWeapon);
+	}
 }
 
 void APlayerCharacter::UnEquipWeapon()
 {
-	if (EquipFromBackWeapon)
+	//Verifica che l'asset del Montage (l'animazione) sia valido prima di procedere
+	if (AnimInstance && UnEquipFromHandWeapon)
 	{
+		//Avvia la riproduzione del Montage sull'istanza di animazione corrente
 		AnimInstance->Montage_Play(UnEquipFromHandWeapon);
+		//Imposta un flag di stato per bloccare altre azioni (es. sparare) durante l'animazione
 		bIsEquippingWeapon = true;
+		bIsWeaponEquipped = false;
+		//Dichiarazione di un "Delegate" per gestire l'evento di fine animazione
 		FOnMontageEnded OnMontageEnded;
+		//Lega una funzione Lambda al delegate. 
+		// Questa funzione verrà eseguita AUTOMATICAMENTE quando il montage finisce o viene interrotto.
 		OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
 		{
-			bIsEquippingWeapon = false;
-			OnWeaponUnEquipped.Broadcast();
+		   //Resetta il flag: l'azione è terminata, il personaggio può fare altro
+		   bIsEquippingWeapon = false;
+		   //Notifica ad altri sistemi (es. UI o Inventory) che l'arma è stata riposta
+		   OnWeaponUnEquipped.Broadcast();
 		});
+
+		//Registra il delegate appena creato specificamente per questo Montage
 		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, UnEquipFromHandWeapon);
 	}
 }

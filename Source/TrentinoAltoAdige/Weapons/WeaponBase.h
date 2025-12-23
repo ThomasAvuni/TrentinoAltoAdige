@@ -6,6 +6,21 @@
 #include "GameFramework/Actor.h"
 #include "WeaponBase.generated.h"
 
+USTRUCT(BlueprintType)
+struct FComboAttack
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animation")
+	UAnimMontage* AttackMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animation")
+	UAnimMontage* EnemyReactionMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Damage")
+	float DamageMultiplier = 0.f;
+};
+
 UCLASS()
 class TRENTINOALTOADIGE_API AWeaponBase : public AActor
 {
@@ -15,11 +30,22 @@ public:
 	// Sets default values for this actor's properties
 	AWeaponBase();
 
+	UFUNCTION(BlueprintCallable)
+	const float& GetWeaponBaseDamage() const {return WeaponBaseDamage;}
+	UFUNCTION(BlueprintCallable)
+	const TArray<FComboAttack>& GetWeaponComboAttacks() const {return ComboAttacks;}
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditDefaultsOnly)
-	class USkeletalMeshComponent* WeaponMesh;
+	USkeletalMeshComponent* WeaponMesh;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Damage")
+	float WeaponBaseDamage = 20.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
+	TArray<FComboAttack> ComboAttacks;
 	
 };
