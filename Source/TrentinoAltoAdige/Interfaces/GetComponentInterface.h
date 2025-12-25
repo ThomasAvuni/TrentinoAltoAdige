@@ -8,7 +8,7 @@
 
 class UCombatSystemComponent;
 // This class does not need to be modified.
-UINTERFACE()
+UINTERFACE(NotBlueprintable)
 class UGetComponentInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -22,5 +22,6 @@ class TRENTINOALTOADIGE_API IGetComponentInterface
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const = 0; 
 };

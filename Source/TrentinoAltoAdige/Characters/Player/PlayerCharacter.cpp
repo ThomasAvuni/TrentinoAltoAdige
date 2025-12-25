@@ -15,6 +15,7 @@ APlayerCharacter::APlayerCharacter()
 	
 	//CombatComp
 	CombatSystemComponent = CreateDefaultSubobject<UCombatSystemComponent>("CombatSysComp");
+	WeaponHolding = EWeaponHoldingType::None;
 }
 
 // Called when the game starts or when spawned
@@ -94,6 +95,7 @@ void APlayerCharacter::InternalEquipWeapon()
 		   bIsEquippingWeapon = false;
 			// Aggiorna lo stato logico: l'arma è ora considerata equipaggiata
 			bIsWeaponEquipped = true;
+			WeaponHolding = EWeaponHoldingType::GreatSword;
 		});
 		// Associa formalmente il delegate al montage specifico appena avviato
 		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, EquipFromBackWeapon);
@@ -120,6 +122,8 @@ void APlayerCharacter::InternalUnEquipWeapon()
 		   bIsEquippingWeapon = false;
 		   //Notifica ad altri sistemi (es. UI o Inventory) che l'arma è stata riposta
 		   OnWeaponUnEquipped.Broadcast();
+			
+			WeaponHolding = EWeaponHoldingType::None;
 		});
 
 		//Registra il delegate appena creato specificamente per questo Montage

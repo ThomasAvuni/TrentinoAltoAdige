@@ -18,6 +18,7 @@ public:
 	// Sets default values for this component's properties
 	UCombatSystemComponent();
 
+	UFUNCTION(BlueprintPure)
 	bool IsAttacking() const {return bIsAttacking;}
 	void SaveCombo();
 	void ResetCombo();
@@ -32,4 +33,8 @@ private:
 	int32 AttackIndex = 0;
 	bool bIsAttacking = false;
 	bool bSaveCombo = false;
+	
+	//Sound
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	TObjectPtr<USoundBase> AttackSound;
 };

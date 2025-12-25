@@ -32,8 +32,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	const float& GetWeaponBaseDamage() const {return WeaponBaseDamage;}
+	
 	UFUNCTION(BlueprintCallable)
 	const TArray<FComboAttack>& GetWeaponComboAttacks() const {return ComboAttacks;}
+
+	const TObjectPtr<USoundBase>& GetWeaponHitSound() const {return AttackSound;}
 	
 protected:
 	// Called when the game starts or when spawned
@@ -48,4 +51,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
 	TArray<FComboAttack> ComboAttacks;
 	
+	//Sound
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	TObjectPtr<USoundBase> AttackSound;
 };

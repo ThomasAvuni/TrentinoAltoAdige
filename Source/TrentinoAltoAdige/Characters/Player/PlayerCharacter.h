@@ -15,6 +15,13 @@ class UInputMappingContext;
 class UInputAction;
 class UInputComponent;
 
+UENUM(BlueprintType)
+enum class EWeaponHoldingType : uint8
+{
+	None, 
+	GreatSword UMETA(DisplayName = "Ranged Weapon"),
+};
+
 UCLASS()
 class TRENTINOALTOADIGE_API APlayerCharacter : public ACharacter, public IGetComponentInterface, public ICombatInterface
 {
@@ -44,9 +51,13 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	//?Blueprint Hooks
+	UFUNCTION(BlueprintImplementableEvent)
+	void FOVAnimation();
+	
 	//?Interfaces
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
-	virtual class AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
+	virtual AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
 	virtual USkeletalMeshComponent* GetCharacterMesh() const override {return GetMesh();}
 	virtual void EquipWeapon() override {InternalEquipWeapon();}
 	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
@@ -81,6 +92,9 @@ protected:
 	void InternalUnEquipWeapon();
 
 	void Attack();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	EWeaponHoldingType WeaponHolding;
 	
 public:	AWeaponBase* GetCurrentWeapon() {return CurrentWeapon;}	
 protected:

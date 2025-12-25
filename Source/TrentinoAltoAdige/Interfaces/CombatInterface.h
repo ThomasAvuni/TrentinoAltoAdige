@@ -7,7 +7,7 @@
 #include "CombatInterface.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE()
+UINTERFACE(NotBlueprintable)
 class UCombatInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -24,6 +24,7 @@ class TRENTINOALTOADIGE_API ICombatInterface
 public:
 	virtual class AWeaponBase* GetWeapon() const = 0;
 	virtual USkeletalMeshComponent* GetCharacterMesh() const = 0;
+	UFUNCTION(BlueprintCallable)
 	virtual bool IsWeaponEquipped() const = 0;
 	virtual void EquipWeapon() = 0;
 	virtual void UnEquipWeapon() = 0;

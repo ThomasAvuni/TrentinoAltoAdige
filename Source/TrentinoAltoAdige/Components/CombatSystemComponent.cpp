@@ -3,8 +3,9 @@
 
 #include "CombatSystemComponent.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "TrentinoAltoAdige/DebugMacros.h"
-#include "TrentinoAltoAdige/Characters/CharacterAnimInstance.h"
+#include "TrentinoAltoAdige/Characters/Animation/CharacterAnimInstance.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 
@@ -17,7 +18,6 @@ UCombatSystemComponent::UCombatSystemComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 	OwnerRef = Cast<ICombatInterface>(GetOwner());
 }
-
 
 // Called when the game starts
 void UCombatSystemComponent::BeginPlay()
@@ -42,6 +42,8 @@ void UCombatSystemComponent::Attack()
 				int32 CurrentAttackIndex = AttackIndex % ComboAttacks.Num();
 				if (UAnimMontage* AttackMontage = ComboAttacks[CurrentAttackIndex].AttackMontage)
 				{
+					if (AttackSound)
+						UGameplayStatics::PlaySound2D(GetWorld(), AttackSound, 0.65f);
 					bIsAttacking = true;
 					bSaveCombo = false;
 					AnimInstance->Montage_Play(AttackMontage);
@@ -50,10 +52,6 @@ void UCombatSystemComponent::Attack()
 			}
 		}
 	}
-}
-
-void UCombatSystemComponent::PerformTrace()
-{
 }
 
 void UCombatSystemComponent::SaveCombo()
@@ -68,3 +66,9 @@ void UCombatSystemComponent::ResetCombo()
 	bIsAttacking = false;
 	AttackIndex = 0;
 }
+
+void UCombatSystemComponent::PerformTrace()
+{
+	
+}
+
