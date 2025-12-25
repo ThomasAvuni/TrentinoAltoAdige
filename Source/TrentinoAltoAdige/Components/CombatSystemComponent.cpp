@@ -34,10 +34,11 @@ void UCombatSystemComponent::Attack()
 	
 	if (OwnerRef)
 	{
-		if (const AWeaponBase* Weapon = OwnerRef->GetWeapon())
+		if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
 		{
 			if (UCharacterAnimInstance* AnimInstance = Cast<UCharacterAnimInstance>(OwnerRef->GetCharacterMesh()->GetAnimInstance()))
 			{
+				Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
 				const TArray<FComboAttack>& ComboAttacks = Weapon->GetWeaponComboAttacks();
 				int32 CurrentAttackIndex = AttackIndex % ComboAttacks.Num();
 				if (UAnimMontage* AttackMontage = ComboAttacks[CurrentAttackIndex].AttackMontage)
@@ -65,6 +66,9 @@ void UCombatSystemComponent::ResetCombo()
 	bSaveCombo = false;
 	bIsAttacking = false;
 	AttackIndex = 0;
+	if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+		Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordIdleSocket"));
+		
 }
 
 void UCombatSystemComponent::PerformTrace()

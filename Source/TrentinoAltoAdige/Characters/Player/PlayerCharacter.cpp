@@ -91,8 +91,9 @@ void APlayerCharacter::InternalEquipWeapon()
 		// Viene catturato 'this' per poter accedere alle variabili della classe
 		OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
 		{
-		   // L'animazione è terminata o interrotta: sblocca lo stato del personaggio
-		   bIsEquippingWeapon = false;
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordIdleSocket"));
+			// L'animazione è terminata o interrotta: sblocca lo stato del personaggio
+			bIsEquippingWeapon = false;
 			// Aggiorna lo stato logico: l'arma è ora considerata equipaggiata
 			bIsWeaponEquipped = true;
 			WeaponHolding = EWeaponHoldingType::GreatSword;
@@ -107,6 +108,7 @@ void APlayerCharacter::InternalUnEquipWeapon()
 	//Verifica che l'asset del Montage (l'animazione) sia valido prima di procedere
 	if (AnimInstance && UnEquipFromHandWeapon)
 	{
+		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
 		//Avvia la riproduzione del Montage sull'istanza di animazione corrente
 		AnimInstance->Montage_Play(UnEquipFromHandWeapon);
 		//Imposta un flag di stato per bloccare altre azioni (es. sparare) durante l'animazione
