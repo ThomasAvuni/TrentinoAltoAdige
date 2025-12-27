@@ -4,8 +4,10 @@
 #include "CombatSystemComponent.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "Misc/ICompressionFormat.h"
 #include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Characters/Animation/CharacterAnimInstance.h"
+#include "TrentinoAltoAdige/Characters/Enemy/EnemyBase.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 
@@ -73,6 +75,33 @@ void UCombatSystemComponent::ResetCombo()
 
 void UCombatSystemComponent::PerformTrace()
 {
-	
+	if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+	{
+		FVector TraceStart = Weapon->GetMesh()->GetSocketLocation(FName("SwordBase"));
+		FVector TraceEnd = Weapon->GetMesh()->GetSocketLocation(FName("SwordTip"));
+		float fRadius = 20.f;
+		FHitResult HitResult;
+		
+		FCollisionObjectQueryParams CollisionObjectQueryParams;
+		CollisionObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
+		
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(GetOwner());
+		
+		if (GetWorld()->SweepSingleByObjectType(HitResult, TraceStart, TraceEnd, FQuat::Identity, CollisionObjectQueryParams, 
+			FCollisionShape::MakeSphere(fRadius), QueryParams))
+		{
+			OwnerRef->PerformFOVAnimation();
+			AActor* EnemyActor = HitResult.GetActor();
+			if (!EnemiesHitThisAttack.Contains(EnemyActor))
+			{
+				if (ICombatInterface* Enemy = Cast<ICombatInterface>(EnemyActor))
+				{
+					EnemiesHitThisAttack.Add(EnemyActor);
+					Cast<AEnemyBase>(HitResult.GetActor())->DBG_TakeDamage();
+				}
+			}
+		}
+	}
 }
 

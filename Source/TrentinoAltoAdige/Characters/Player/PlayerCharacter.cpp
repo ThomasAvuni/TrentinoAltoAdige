@@ -111,7 +111,7 @@ void APlayerCharacter::InternalUnEquipWeapon()
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
 		//Avvia la riproduzione del Montage sull'istanza di animazione corrente
 		AnimInstance->Montage_Play(UnEquipFromHandWeapon);
-		//Imposta un flag di stato per bloccare altre azioni (es. sparare) durante l'animazione
+		//Imposta un flag di stato per bloccare altre azioni (es. Sparare) durante l'animazione
 		bIsEquippingWeapon = true;
 		bIsWeaponEquipped = false;
 		//Dichiarazione di un "Delegate" per gestire l'evento di fine animazione

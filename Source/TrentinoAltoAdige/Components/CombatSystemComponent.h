@@ -7,6 +7,7 @@
 #include "CombatSystemComponent.generated.h"
 
 
+class AEnemyBase;
 class ICombatInterface;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -24,6 +25,7 @@ public:
 	void ResetCombo();
 	void Attack();
 	void PerformTrace();
+	void ResetEnemiesHitThisAttack() {EnemiesHitThisAttack.Empty();}
 	
 protected:
 	// Called when the game starts
@@ -33,6 +35,7 @@ private:
 	int32 AttackIndex = 0;
 	bool bIsAttacking = false;
 	bool bSaveCombo = false;
+	TSet<TObjectPtr<AActor>> EnemiesHitThisAttack;
 	
 	//Sound
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")

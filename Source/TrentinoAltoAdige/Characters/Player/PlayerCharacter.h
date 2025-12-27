@@ -55,6 +55,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void FOVAnimation();
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void CameraShake();
+	
 	//?Interfaces
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
@@ -62,6 +65,8 @@ public:
 	virtual void EquipWeapon() override {InternalEquipWeapon();}
 	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
 	virtual bool IsWeaponEquipped() const override {return bIsWeaponEquipped;}
+	virtual void PerformFOVAnimation() override {FOVAnimation();}
+	virtual void PerformCameraShake() override {CameraShake();}
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsSprinting = false;

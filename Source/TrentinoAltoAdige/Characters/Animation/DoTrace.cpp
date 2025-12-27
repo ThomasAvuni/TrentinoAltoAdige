@@ -13,6 +13,14 @@ void UDoTrace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* 
 	OwnerRef = Cast<IGetComponentInterface>(MeshComp->GetOwner());
 }
 
+void UDoTrace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+	const FAnimNotifyEventReference& EventReference)
+{
+	Super::NotifyEnd(MeshComp, Animation, EventReference);
+	if (OwnerRef)
+		OwnerRef->GetCombatSystemComponent()->ResetEnemiesHitThisAttack();
+}
+
 void UDoTrace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime,
                           const FAnimNotifyEventReference& EventReference)
 {

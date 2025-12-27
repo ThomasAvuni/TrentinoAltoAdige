@@ -37,6 +37,8 @@ public:
 	const TArray<FComboAttack>& GetWeaponComboAttacks() const {return ComboAttacks;}
 
 	const TObjectPtr<USoundBase>& GetWeaponHitSound() const {return AttackSound;}
+
+	USkeletalMeshComponent* GetMesh() const {return WeaponMesh;}
 	
 protected:
 	// Called when the game starts or when spawned
