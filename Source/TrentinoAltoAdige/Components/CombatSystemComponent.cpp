@@ -4,10 +4,11 @@
 #include "CombatSystemComponent.h"
 
 #include "Kismet/GameplayStatics.h"
-#include "Misc/ICompressionFormat.h"
+#include "NiagaraFunctionLibrary.h"
 #include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Characters/Animation/CharacterAnimInstance.h"
 #include "TrentinoAltoAdige/Characters/Enemy/EnemyBase.h"
+#include "TrentinoAltoAdige/Characters/Player/PlayerCharacter.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 
@@ -91,17 +92,52 @@ void UCombatSystemComponent::PerformTrace()
 		if (GetWorld()->SweepSingleByObjectType(HitResult, TraceStart, TraceEnd, FQuat::Identity, CollisionObjectQueryParams, 
 			FCollisionShape::MakeSphere(fRadius), QueryParams))
 		{
-			OwnerRef->PerformFOVAnimation();
-			AActor* EnemyActor = HitResult.GetActor();
-			if (!EnemiesHitThisAttack.Contains(EnemyActor))
+			AActor* HitActor = HitResult.GetActor();
+			if (!EnemiesHitThisAttack.Contains(HitActor))
 			{
-				if (ICombatInterface* Enemy = Cast<ICombatInterface>(EnemyActor))
+				if (ICombatInterface* Enemy = Cast<ICombatInterface>(HitActor))
 				{
-					EnemiesHitThisAttack.Add(EnemyActor);
+					EnemiesHitThisAttack.Add(HitActor);
+
+					if (HitVFX)
+						UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, HitResult.ImpactPoint);
+					
+					OwnerRef->PerformCameraShake();
+						
+					ApplyHitStop(GetOwner(), HitStopDuration, HitStopTimeDilation);
+					
+					//? Calculating Direction
+					FVector HitActorForwardVector = HitActor->GetActorForwardVector();
+					FVector HitDirection = HitActor->GetActorLocation() - GetOwner()->GetActorLocation();
+					HitDirection.Normalize();
+					float DotProduct = FVector::DotProduct(HitActorForwardVector, HitDirection);
+					if (DotProduct > 0.6f)
+					{
+						DBG_LINE("Back");
+					}
+					else if (DotProduct < - 0.6f)
+					{
+						DBG_LINE("Front");
+					}
+					else
+						DBG_LINE("Side");
+					
 					Cast<AEnemyBase>(HitResult.GetActor())->DBG_TakeDamage();
 				}
 			}
 		}
 	}
+}
+
+void UCombatSystemComponent::ApplyHitStop(AActor* Actor, float Duration, float TimeDilation) const
+{
+	Actor->CustomTimeDilation = TimeDilation;
+
+	FTimerHandle t;
+	GetWorld()->GetTimerManager().SetTimer(t, [this]
+	{
+		GetOwner()->CustomTimeDilation = 1.f;
+	}, Duration, false);
+	
 }
 

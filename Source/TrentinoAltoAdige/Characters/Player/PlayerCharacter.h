@@ -53,9 +53,6 @@ public:
 
 	//?Blueprint Hooks
 	UFUNCTION(BlueprintImplementableEvent)
-	void FOVAnimation();
-	
-	UFUNCTION(BlueprintImplementableEvent)
 	void CameraShake();
 	
 	//?Interfaces
@@ -65,7 +62,6 @@ public:
 	virtual void EquipWeapon() override {InternalEquipWeapon();}
 	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
 	virtual bool IsWeaponEquipped() const override {return bIsWeaponEquipped;}
-	virtual void PerformFOVAnimation() override {FOVAnimation();}
 	virtual void PerformCameraShake() override {CameraShake();}
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)

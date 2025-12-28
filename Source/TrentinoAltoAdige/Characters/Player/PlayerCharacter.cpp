@@ -45,6 +45,9 @@ void APlayerCharacter::BeginPlay()
 
 	AnimInstance = GetMesh()->GetAnimInstance();
 	
+	//!!TEMP: SOLO PER DEBUG
+	EquipWeapon();
+	
 }
 
 // Called to bind functionality to input
