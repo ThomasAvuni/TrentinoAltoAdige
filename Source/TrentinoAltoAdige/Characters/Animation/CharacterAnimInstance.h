@@ -23,6 +23,8 @@ public:
 	void AnimNotify_SaveAttack();
 	UFUNCTION()
 	void AnimNotify_ResetCombo();
+	UFUNCTION()
+	void AnimNotify_SnapToTarget();
 protected:
 	virtual void NativeBeginPlay() override;
 	IGetComponentInterface* OwnerRef;

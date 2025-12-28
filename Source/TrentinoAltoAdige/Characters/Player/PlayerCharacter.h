@@ -58,7 +58,7 @@ public:
 	//?Interfaces
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
-	virtual USkeletalMeshComponent* GetCharacterMesh() const override {return GetMesh();}
+	virtual USkeletalMeshComponent* GetCharacterMesh() override {return GetMesh();}
 	virtual void EquipWeapon() override {InternalEquipWeapon();}
 	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
 	virtual bool IsWeaponEquipped() const override {return bIsWeaponEquipped;}

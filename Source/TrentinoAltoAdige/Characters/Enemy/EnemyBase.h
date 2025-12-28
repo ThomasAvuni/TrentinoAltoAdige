@@ -12,7 +12,7 @@ class TRENTINOALTOADIGE_API AEnemyBase : public ACharacter, public ICombatInterf
 {
 public:
 	virtual AWeaponBase* GetWeapon() const override;
-	virtual USkeletalMeshComponent* GetCharacterMesh() const override;
+	virtual USkeletalMeshComponent* GetCharacterMesh() override {return GetMesh();}
 	virtual bool IsWeaponEquipped() const override;
 	virtual void EquipWeapon() override;
 	virtual void UnEquipWeapon() override;

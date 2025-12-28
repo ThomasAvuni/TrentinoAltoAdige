@@ -5,10 +5,10 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Characters/Animation/CharacterAnimInstance.h"
 #include "TrentinoAltoAdige/Characters/Enemy/EnemyBase.h"
-#include "TrentinoAltoAdige/Characters/Player/PlayerCharacter.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 
@@ -20,6 +20,16 @@ UCombatSystemComponent::UCombatSystemComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 	OwnerRef = Cast<ICombatInterface>(GetOwner());
+}
+
+void UCombatSystemComponent::SnapToTarget()
+{
+	if (CurrentHitActor)
+	{
+		FVector Loc = CurrentHitActor->GetActorLocation();
+		FRotator rot = UKismetMathLibrary::FindLookAtRotation(GetOwner()->GetActorLocation(), Loc);
+		GetOwner()->SetActorRotation(rot);
+	}
 }
 
 // Called when the game starts
@@ -68,6 +78,7 @@ void UCombatSystemComponent::ResetCombo()
 {
 	bSaveCombo = false;
 	bIsAttacking = false;
+	CurrentHitActor = nullptr;
 	AttackIndex = 0;
 	if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
 		Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordIdleSocket"));
@@ -100,8 +111,9 @@ void UCombatSystemComponent::PerformTrace()
 					EnemiesHitThisAttack.Add(HitActor);
 
 					if (HitVFX)
-						UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, HitResult.ImpactPoint);
+						UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, HitResult.Location);
 					
+					CurrentHitActor = HitActor;
 					OwnerRef->PerformCameraShake();
 						
 					ApplyHitStop(GetOwner(), HitStopDuration, HitStopTimeDilation);
@@ -118,6 +130,8 @@ void UCombatSystemComponent::PerformTrace()
 					else if (DotProduct < - 0.6f)
 					{
 						DBG_LINE("Front");
+
+						Enemy->GetCharacterMesh()->GetAnimInstance()->Montage_Play(HitReactionMontage);
 					}
 					else
 						DBG_LINE("Side");

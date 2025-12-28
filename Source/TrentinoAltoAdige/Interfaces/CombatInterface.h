@@ -23,7 +23,7 @@ class TRENTINOALTOADIGE_API ICombatInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	virtual class AWeaponBase* GetWeapon() const = 0;
-	virtual USkeletalMeshComponent* GetCharacterMesh() const = 0;
+	virtual USkeletalMeshComponent* GetCharacterMesh() = 0;
 	UFUNCTION(BlueprintCallable)
 	virtual bool IsWeaponEquipped() const = 0;
 	virtual void EquipWeapon() = 0;

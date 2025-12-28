@@ -11,11 +11,6 @@ AWeaponBase* AEnemyBase::GetWeapon() const
 	return nullptr;
 }
 
-USkeletalMeshComponent* AEnemyBase::GetCharacterMesh() const
-{
-	return GetMesh();
-}
-
 bool AEnemyBase::IsWeaponEquipped() const
 {
 	return false;

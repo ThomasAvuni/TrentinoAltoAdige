@@ -27,6 +27,7 @@ public:
 	void Attack();
 	void PerformTrace();
 	void ResetEnemiesHitThisAttack() {EnemiesHitThisAttack.Empty();}
+	void SnapToTarget();
 	
 protected:
 	// Called when the game starts
@@ -44,8 +45,14 @@ private:
 	bool bIsAttacking = false;	//? Flag if the character is attacking or not
 	bool bSaveCombo = false;	//? Flag to save the combo in the Montages
 	TSet<TObjectPtr<AActor>> EnemiesHitThisAttack;	//? Set of Actor Pointers hit this attack, so we don't hit the same Actor multiple times
-
+	TObjectPtr<AActor> CurrentHitActor;
+	
+	
 	void ApplyHitStop(AActor* Actor, float Duration, float TimeDilation) const;
+
+	//TEMP
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* HitReactionMontage;
 	
 	//VFX
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")

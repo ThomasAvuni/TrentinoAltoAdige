@@ -42,3 +42,11 @@ void UCharacterAnimInstance::AnimNotify_ResetCombo()
 	if (OwnerRef)
 		OwnerRef->GetCombatSystemComponent()->ResetCombo();
 }
+
+void UCharacterAnimInstance::AnimNotify_SnapToTarget()
+{
+	if (OwnerRef)
+	{
+		OwnerRef->GetCombatSystemComponent()->SnapToTarget();
+	}
+}
