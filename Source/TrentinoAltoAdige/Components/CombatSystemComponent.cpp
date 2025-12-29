@@ -129,7 +129,6 @@ void UCombatSystemComponent::PerformTrace()
 					else
 					{
 					}
-					
 				}
 			}
 		}
