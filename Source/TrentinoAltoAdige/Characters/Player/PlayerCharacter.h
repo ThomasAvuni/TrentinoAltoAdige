@@ -70,6 +70,7 @@ public:
 	void LerpCamToAttackPosition();
 	UFUNCTION(BlueprintImplementableEvent)
 	void ResetCam();
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsSprinting = false;
