@@ -28,5 +28,4 @@ public:
 	virtual bool IsWeaponEquipped() const = 0;
 	virtual void EquipWeapon() = 0;
 	virtual void UnEquipWeapon() = 0;
-	virtual void PerformCameraShake() {}
 };

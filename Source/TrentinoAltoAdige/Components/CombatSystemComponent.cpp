@@ -9,6 +9,7 @@
 #include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Characters/Animation/CharacterAnimInstance.h"
 #include "TrentinoAltoAdige/Characters/Enemy/EnemyBase.h"
+#include "TrentinoAltoAdige/Characters/Player/PlayerCharacter.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 
@@ -20,6 +21,7 @@ UCombatSystemComponent::UCombatSystemComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 	OwnerRef = Cast<ICombatInterface>(GetOwner());
+	PlayerOwnerRef = Cast<APlayerCharacter>(GetOwner());
 }
 
 // Called when the game starts
@@ -50,6 +52,8 @@ void UCombatSystemComponent::Attack()
 						UGameplayStatics::PlaySound2D(GetWorld(), AttackSound, 0.65f);
 					bIsAttacking = true;
 					bSaveCombo = false;
+					if (PlayerOwnerRef)
+						PlayerOwnerRef->LerpCamToAttackPosition();
 					AnimInstance->Montage_Play(AttackMontage);
 					AttackIndex++;
 				}
@@ -66,13 +70,14 @@ void UCombatSystemComponent::SaveCombo()
 
 void UCombatSystemComponent::ResetCombo()
 {
+	if (PlayerOwnerRef)
+		PlayerOwnerRef->ResetCam();
 	bSaveCombo = false;
 	bIsAttacking = false;
 	CurrentHitActor = nullptr;
 	AttackIndex = 0;
 	if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
 		Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordIdleSocket"));
-		
 }
 
 void UCombatSystemComponent::PerformTrace()
@@ -104,7 +109,8 @@ void UCombatSystemComponent::PerformTrace()
 						UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, HitResult.Location);
 					
 					CurrentHitActor = HitActor;
-					OwnerRef->PerformCameraShake();
+					if (PlayerOwnerRef)
+						PlayerOwnerRef->CameraShake();
 						
 					ApplyHitStop(GetOwner(), HitStopDuration, HitStopTimeDilation);
 					
@@ -115,18 +121,15 @@ void UCombatSystemComponent::PerformTrace()
 					float DotProduct = FVector::DotProduct(HitActorForwardVector, HitDirection);
 					if (DotProduct > 0.6f)
 					{
-						DBG_LINE("Back");
 					}
 					else if (DotProduct < - 0.6f)
 					{
-						DBG_LINE("Front");
-
 						Enemy->GetCharacterMesh()->GetAnimInstance()->Montage_Play(HitReactionMontage);
 					}
 					else
-						DBG_LINE("Side");
+					{
+					}
 					
-					Cast<AEnemyBase>(HitResult.GetActor())->DBG_TakeDamage();
 				}
 			}
 		}

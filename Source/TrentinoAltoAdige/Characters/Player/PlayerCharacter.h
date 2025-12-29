@@ -62,10 +62,14 @@ public:
 	virtual void EquipWeapon() override {InternalEquipWeapon();}
 	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
 	virtual bool IsWeaponEquipped() const override {return bIsWeaponEquipped;}
-	virtual void PerformCameraShake() override {CameraShake();}
 	virtual void SnapToTarget() override {InternalSnapToTarget();}
 	UFUNCTION(BlueprintImplementableEvent)
 	void InternalSnapToTarget();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void LerpCamToAttackPosition();
+	UFUNCTION(BlueprintImplementableEvent)
+	void ResetCam();
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsSprinting = false;

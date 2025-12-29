@@ -42,6 +42,7 @@ protected:
 	TObjectPtr<AActor> CurrentHitActor;
 private:
 	ICombatInterface* OwnerRef;	//? Combat Owner Ref
+	TObjectPtr<class APlayerCharacter> PlayerOwnerRef;
 	int32 AttackIndex = 0;		//? Index of the current attack in the array
 	bool bIsAttacking = false;	//? Flag if the character is attacking or not
 	bool bSaveCombo = false;	//? Flag to save the combo in the Montages

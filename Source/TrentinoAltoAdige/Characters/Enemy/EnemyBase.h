@@ -23,12 +23,9 @@ private:
 public:
 	// Sets default values for this character's properties
 	AEnemyBase();
-	void DBG_TakeDamage();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 	
-public:
 };

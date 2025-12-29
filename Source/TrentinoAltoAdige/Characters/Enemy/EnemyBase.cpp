@@ -16,6 +16,7 @@ bool AEnemyBase::IsWeaponEquipped() const
 	return false;
 }
 
+//! Spostare in CombatSystemComponent
 void AEnemyBase::EquipWeapon()
 {
 }
@@ -37,10 +38,3 @@ void AEnemyBase::BeginPlay()
 	Super::BeginPlay();
 	
 }
-
-void AEnemyBase::DBG_TakeDamage()
-{
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("HIT"));
-}
-
-
