@@ -22,16 +22,6 @@ UCombatSystemComponent::UCombatSystemComponent()
 	OwnerRef = Cast<ICombatInterface>(GetOwner());
 }
 
-void UCombatSystemComponent::SnapToTarget()
-{
-	if (CurrentHitActor)
-	{
-		FVector Loc = CurrentHitActor->GetActorLocation();
-		FRotator rot = UKismetMathLibrary::FindLookAtRotation(GetOwner()->GetActorLocation(), Loc);
-		GetOwner()->SetActorRotation(rot);
-	}
-}
-
 // Called when the game starts
 void UCombatSystemComponent::BeginPlay()
 {

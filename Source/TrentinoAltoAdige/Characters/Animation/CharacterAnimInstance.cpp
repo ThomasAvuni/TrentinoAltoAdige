@@ -47,6 +47,6 @@ void UCharacterAnimInstance::AnimNotify_SnapToTarget()
 {
 	if (OwnerRef)
 	{
-		OwnerRef->GetCombatSystemComponent()->SnapToTarget();
+		OwnerRef->SnapToTarget();
 	}
 }

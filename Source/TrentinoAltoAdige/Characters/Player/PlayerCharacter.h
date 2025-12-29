@@ -45,7 +45,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
 	UInputAction* AttackAction;
 	//Components
-	UPROPERTY(EditDefaultsOnly, Category = "Components | Combat")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
 	UCombatSystemComponent* CombatSystemComponent;
 public:	
 	// Called to bind functionality to input
@@ -63,6 +63,9 @@ public:
 	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
 	virtual bool IsWeaponEquipped() const override {return bIsWeaponEquipped;}
 	virtual void PerformCameraShake() override {CameraShake();}
+	virtual void SnapToTarget() override {InternalSnapToTarget();}
+	UFUNCTION(BlueprintImplementableEvent)
+	void InternalSnapToTarget();
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsSprinting = false;

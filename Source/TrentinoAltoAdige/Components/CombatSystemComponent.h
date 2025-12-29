@@ -27,8 +27,7 @@ public:
 	void Attack();
 	void PerformTrace();
 	void ResetEnemiesHitThisAttack() {EnemiesHitThisAttack.Empty();}
-	void SnapToTarget();
-	
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -39,15 +38,15 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combat | HitStop")
 	float HitStopTimeDilation = 0.12f;
 	
+	UPROPERTY(BlueprintReadWrite)
+	TObjectPtr<AActor> CurrentHitActor;
 private:
 	ICombatInterface* OwnerRef;	//? Combat Owner Ref
 	int32 AttackIndex = 0;		//? Index of the current attack in the array
 	bool bIsAttacking = false;	//? Flag if the character is attacking or not
 	bool bSaveCombo = false;	//? Flag to save the combo in the Montages
 	TSet<TObjectPtr<AActor>> EnemiesHitThisAttack;	//? Set of Actor Pointers hit this attack, so we don't hit the same Actor multiple times
-	TObjectPtr<AActor> CurrentHitActor;
-	
-	
+
 	void ApplyHitStop(AActor* Actor, float Duration, float TimeDilation) const;
 
 	//TEMP

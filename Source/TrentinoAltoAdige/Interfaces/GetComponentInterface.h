@@ -24,4 +24,5 @@ class TRENTINOALTOADIGE_API IGetComponentInterface
 public:
 	UFUNCTION(BlueprintCallable)
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const = 0; 
+	virtual void SnapToTarget() = 0;
 };
