@@ -19,7 +19,10 @@ void UCharacterAnimInstance::AnimNotify_EquipWeapon()
 {
 	if (ICombatInterface* Character = Cast<ICombatInterface>(GetOwningActor()))
 	{
-		Character->GetWeapon()->AttachToComponent(Character->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
+		if (AWeaponBase* Weapon = Character->GetWeapon())
+		{
+			Character->GetWeapon()->AttachToComponent(Character->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetHandSocket());
+		}
 	}
 }
 
@@ -27,7 +30,10 @@ void UCharacterAnimInstance::AnimNotify_UnEquipWeapon()
 {
 	if (ICombatInterface* Character = Cast<ICombatInterface>(GetOwningActor()))
 	{
-		Character->GetWeapon()->AttachToComponent(Character->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordBackSocket"));
+		if (AWeaponBase* Weapon = Character->GetWeapon())
+		{
+			Character->GetWeapon()->AttachToComponent(Character->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetBackSocket());
+		}
 	}
 }
 

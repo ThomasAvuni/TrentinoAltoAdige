@@ -16,7 +16,6 @@ public:
 	virtual bool IsWeaponEquipped() const override;
 	virtual void EquipWeapon() override;
 	virtual void UnEquipWeapon() override;
-
 private:
 	GENERATED_BODY()
 

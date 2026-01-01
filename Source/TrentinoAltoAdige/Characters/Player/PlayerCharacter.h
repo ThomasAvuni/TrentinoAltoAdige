@@ -6,14 +6,17 @@
 #include "GameFramework/Character.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
 
 #include "PlayerCharacter.generated.h"
 
+class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UInputComponent;
+#define DEBUG_BUILD 1
 
 UENUM(BlueprintType)
 enum class EWeaponHoldingType : uint8
@@ -35,6 +38,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	/*?-------------------|INPUT|--------------------*/
 	//Default mapping context
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* InputMappingContext;
@@ -44,53 +48,64 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
 	UInputAction* AttackAction;
-	//Components
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
+	UInputAction* TargetAction;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
+	UInputAction* NextTargetAction;
+	
+	/*?-------------------|COMPONENTS|--------------------*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
 	UCombatSystemComponent* CombatSystemComponent;
 public:	
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	//?Blueprint Hooks
+	/*?-------------------|BLUEPRINT HOOKS|--------------------*/
 	UFUNCTION(BlueprintImplementableEvent)
 	void CameraShake();
+	UFUNCTION(BlueprintImplementableEvent)
+	void LerpCamToAttackPosition();
+	UFUNCTION(BlueprintImplementableEvent)
+	void ResetCam();
+	UFUNCTION(BlueprintImplementableEvent)
+	UCameraComponent* GetCamera();
 	
-	//?Interfaces
+	/*?-------------------|INTERFACES|--------------------*/
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
 	virtual USkeletalMeshComponent* GetCharacterMesh() override {return GetMesh();}
 	virtual void EquipWeapon() override {InternalEquipWeapon();}
 	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
-	virtual bool IsWeaponEquipped() const override {return bIsWeaponEquipped;}
+	virtual bool IsWeaponEquipped() const override {return CombatSystemComponent->IsWeaponEquipped();}
 	virtual void SnapToTarget() override {InternalSnapToTarget();}
-	UFUNCTION(BlueprintImplementableEvent)
-	void InternalSnapToTarget();
 	
 	UFUNCTION(BlueprintImplementableEvent)
-	void LerpCamToAttackPosition();
-	UFUNCTION(BlueprintImplementableEvent)
-	void ResetCam();
+	void InternalSnapToTarget();
+	void InternalNextTarget();
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsSprinting = false;
-	//?Weapon | Vars
+	
+	/*?-------------------|WEAPON | VARS|--------------------*/
 	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<class AWeaponBase> CurrentWeapon;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<AWeaponBase> WeaponClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-	bool bIsWeaponEquipped = false;
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool bIsWeaponEquipped = false; */
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-	bool bCanEquipWeapon = true;
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool bCanEquipWeapon = true; */
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-	bool bIsEquippingWeapon = false;
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool bIsEquippingWeapon = false; */
 	
-	/*?Weapons | Functions*/
+	/*?-------------------|WEAPON | FUNCTIONS|--------------------*/
 	UFUNCTION(BlueprintCallable)
 	void ToggleWeapon();
 
@@ -99,20 +114,17 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void InternalUnEquipWeapon();
+	
+	UFUNCTION(BlueprintCallable)
+	void InternalTarget();
 
-	void Attack();
+	void InternalAttack();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EWeaponHoldingType WeaponHolding;
 	
-public:	AWeaponBase* GetCurrentWeapon() {return CurrentWeapon;}	
-protected:
-	
-	/*?Animations*/
+	/*?-------------------|ANIMATIONS|--------------------*/
 	TObjectPtr<UAnimInstance> AnimInstance;
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponUnEquipped);
-	UPROPERTY(BlueprintAssignable)
-	FOnWeaponUnEquipped OnWeaponUnEquipped;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
 	TObjectPtr<UAnimMontage> EquipFromBackWeapon;

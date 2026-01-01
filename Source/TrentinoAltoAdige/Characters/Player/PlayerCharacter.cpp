@@ -6,7 +6,6 @@
 #include "EnhancedInputComponent.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
-
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -45,8 +44,10 @@ void APlayerCharacter::BeginPlay()
 
 	AnimInstance = GetMesh()->GetAnimInstance();
 	
-	//!!TEMP: SOLO PER DEBUG
+//!!TEMP: SOLO PER DEBUG
+#if DEBUG_BUILD
 	EquipWeapon();
+#endif
 	
 }
 
@@ -58,19 +59,22 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		EnhancedInputComponent->BindAction(ToggleWeaponAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleWeapon);
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &APlayerCharacter::Attack);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &APlayerCharacter::InternalAttack);
+		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &APlayerCharacter::InternalTarget);
+		EnhancedInputComponent->BindAction(NextTargetAction, ETriggerEvent::Started, this, &APlayerCharacter::InternalNextTarget);
 	}
 }
 
 #pragma region Weapon
+
 void APlayerCharacter::ToggleWeapon()
 {
 	//Se stiamo sprintando, non facciamo nulla
-	if (bIsSprinting || bIsEquippingWeapon)
+	if (bIsSprinting || CombatSystemComponent->IsEquippingWeapon())
 		return;
 	
 	//Se NON si è già equipaggiata l'arma, si equipaggia e esce dalla funzinoe
-	if (!bIsWeaponEquipped)
+	if (!CombatSystemComponent->IsWeaponEquipped())
 	{
 		InternalEquipWeapon();
 		return;
@@ -81,63 +85,30 @@ void APlayerCharacter::ToggleWeapon()
 
 void APlayerCharacter::InternalEquipWeapon()
 {
-	// Verifica che sia l'istanza di animazione che l'asset del montage siano validi
-	if (AnimInstance && EquipFromBackWeapon)
-	{
-		// Attiva il flag di occupazione per impedire altre azioni durante l'animazione
-		bIsEquippingWeapon = true;
-		// Avvia la riproduzione dell'animazione di equipaggiamento dalla schiena
-		AnimInstance->Montage_Play(EquipFromBackWeapon);
-		// Dichiarazione del delegate per intercettare la fine del montage
-		FOnMontageEnded OnMontageEnded;
-		// Definizione della logica da eseguire al termine dell'animazione tramite Lambda
-		// Viene catturato 'this' per poter accedere alle variabili della classe
-		OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
-		{
-			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordIdleSocket"));
-			// L'animazione è terminata o interrotta: sblocca lo stato del personaggio
-			bIsEquippingWeapon = false;
-			// Aggiorna lo stato logico: l'arma è ora considerata equipaggiata
-			bIsWeaponEquipped = true;
-			WeaponHolding = EWeaponHoldingType::GreatSword;
-		});
-		// Associa formalmente il delegate al montage specifico appena avviato
-		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, EquipFromBackWeapon);
-	}
+	if (CombatSystemComponent)
+		CombatSystemComponent->EquipWeapon(CurrentWeapon->GetIdleSocket(), EquipFromBackWeapon);
 }
 
 void APlayerCharacter::InternalUnEquipWeapon()
 {
-	//Verifica che l'asset del Montage (l'animazione) sia valido prima di procedere
-	if (AnimInstance && UnEquipFromHandWeapon)
-	{
-		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
-		//Avvia la riproduzione del Montage sull'istanza di animazione corrente
-		AnimInstance->Montage_Play(UnEquipFromHandWeapon);
-		//Imposta un flag di stato per bloccare altre azioni (es. Sparare) durante l'animazione
-		bIsEquippingWeapon = true;
-		bIsWeaponEquipped = false;
-		//Dichiarazione di un "Delegate" per gestire l'evento di fine animazione
-		FOnMontageEnded OnMontageEnded;
-		//Lega una funzione Lambda al delegate. 
-		// Questa funzione verrà eseguita AUTOMATICAMENTE quando il montage finisce o viene interrotto.
-		OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
-		{
-		   //Resetta il flag: l'azione è terminata, il personaggio può fare altro
-		   bIsEquippingWeapon = false;
-		   //Notifica ad altri sistemi (es. UI o Inventory) che l'arma è stata riposta
-		   OnWeaponUnEquipped.Broadcast();
-			
-			WeaponHolding = EWeaponHoldingType::None;
-		});
-
-		//Registra il delegate appena creato specificamente per questo Montage
-		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, UnEquipFromHandWeapon);
-	}
+	if (CombatSystemComponent)
+		CombatSystemComponent->UnEquipWeapon(CurrentWeapon->GetHandSocket(), UnEquipFromHandWeapon);
 }
 
-void APlayerCharacter::Attack()
+void APlayerCharacter::InternalAttack()
 {
 	CombatSystemComponent->Attack();
 }
 #pragma endregion
+
+void APlayerCharacter::InternalTarget()
+{
+	if (CombatSystemComponent)
+		CombatSystemComponent->Target();
+}
+
+void APlayerCharacter::InternalNextTarget()
+{
+	if (CombatSystemComponent)
+		CombatSystemComponent->NextTarget();
+}
