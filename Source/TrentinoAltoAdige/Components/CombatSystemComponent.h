@@ -41,7 +41,6 @@ public:
 	/*?-------------------|Weapon Equipping | FUNCTIONS|--------------------*/
 	void EquipWeapon(FName InSocket, UAnimMontage* EquipMontage);
 	void UnEquipWeapon(FName InSocket, UAnimMontage* UnEquipMontage);
-	void InterpolateWeaponToSocket(AWeaponBase* Weapon, FName Socket);
 	UFUNCTION(BlueprintCallable)
 	const bool& IsWeaponEquipped() const  { return bIsWeaponEquipped;  }
 	UFUNCTION(BlueprintCallable)
@@ -68,7 +67,8 @@ private:
 	bool bIsAttacking = false;	//? Flag if the character is attacking or not
 	bool bSaveCombo = false;	//? Flag to save the combo in the Montages
 	TSet<TObjectPtr<AActor>> EnemiesHitThisAttack;	//? Set of Actor Pointers hit this attack, so we don't hit the same Actor multiple times
-
+	UAnimMontage* CurrentAttackMontage;
+	
 	/*?-------------------|TARGETING | VARS|--------------------*/
 	TArray<TObjectPtr<AActor>> TargetActors;
 	bool bIsTargeting = false;

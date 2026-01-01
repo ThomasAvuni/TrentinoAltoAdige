@@ -16,6 +16,8 @@ public:
 	virtual bool IsWeaponEquipped() const override;
 	virtual void EquipWeapon() override;
 	virtual void UnEquipWeapon() override;
+	virtual void ShowTargetWidget() override { InternalShowTarget(); }
+	virtual void HideTargetWidget() override { InternalHideTarget();}
 private:
 	GENERATED_BODY()
 
@@ -23,8 +25,12 @@ public:
 	// Sets default values for this character's properties
 	AEnemyBase();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void InternalShowTarget();
+	UFUNCTION(BlueprintImplementableEvent)
+	void InternalHideTarget();
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
 };

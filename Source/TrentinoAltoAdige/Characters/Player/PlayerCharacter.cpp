@@ -45,7 +45,7 @@ void APlayerCharacter::BeginPlay()
 	AnimInstance = GetMesh()->GetAnimInstance();
 	
 //!!TEMP: SOLO PER DEBUG
-#if DEBUG_BUILD
+#if DEBUG_BUILD && 0
 	EquipWeapon();
 #endif
 	

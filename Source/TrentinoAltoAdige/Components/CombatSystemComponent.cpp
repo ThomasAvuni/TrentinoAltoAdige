@@ -57,7 +57,7 @@ void UCombatSystemComponent::Attack()
 				int32 CurrentAttackIndex = AttackIndex % ComboAttacks.Num();
 
 				// Se il montage dell'attacco esiste, lo eseguo.
-				if (UAnimMontage* AttackMontage = ComboAttacks[CurrentAttackIndex].AttackMontage)
+				if ((CurrentAttackMontage = ComboAttacks[CurrentAttackIndex].AttackMontage))
 				{
 					// Esegui suono d'attacco se presente.
 					if (AttackSound)
@@ -72,8 +72,8 @@ void UCombatSystemComponent::Attack()
 						PlayerOwnerRef->LerpCamToAttackPosition();
 					
 					// Avvio il montage di attacco.
-					AnimInstance->Montage_Play(AttackMontage);
-
+					AnimInstance->Montage_Play(CurrentAttackMontage);
+				
 					// Incremento l'indice degli attacchi per il prossimo colpo di combo.
 					AttackIndex++;
 				}
@@ -87,6 +87,8 @@ void UCombatSystemComponent::SaveCombo()
 	// Se attualmente in attacco, permetto di salvare la combo per concatenare l'attacco successivo.
 	if (bIsAttacking)
 		bSaveCombo = true;
+	else
+		AnimInstance->Montage_Stop(0.f, CurrentAttackMontage);
 }
 
 void UCombatSystemComponent::ResetCombo()
@@ -244,7 +246,7 @@ void UCombatSystemComponent::StartTarget()
 			if (!TargetActors.Contains(Actor))
 			{
 				TargetActors.AddUnique(Actor);
-				
+			
 				FVector Direction = Actor->GetActorLocation() - GetOwner()->GetActorLocation();
 				Direction.Normalize();
 				FVector FacingVector = PlayerOwnerRef ? PlayerOwnerRef->GetCamera()->GetForwardVector() : GetOwner()->GetActorForwardVector();
@@ -273,6 +275,8 @@ void UCombatSystemComponent::StartTarget()
 
 	if (CurrentTargetActor)
 	{
+		if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
+			Enemy->ShowTargetWidget();
 		ACharacter* Char = GetOwner<ACharacter>();
 		Char->GetController()->SetIgnoreLookInput(true);
 		GetWorld()->GetTimerManager().SetTimer(LerpToTargetActorTimer, [this, Char]
@@ -294,13 +298,20 @@ void UCombatSystemComponent::NextTarget()
 {
 	if (bIsTargeting)
 	{
+		if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
+			Enemy->HideTargetWidget();		
+		
 		int32 NewIndex = ++TargetIndex % TargetActors.Num();
 		CurrentTargetActor = TargetActors[NewIndex];
+		if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
+			Enemy->ShowTargetWidget();
 	}
 }
 
 void UCombatSystemComponent::StopTarget()
 {
+	if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
+		Enemy->HideTargetWidget();
 	bIsTargeting = false;
 	TargetActors.Empty();
 	CurrentTargetActor = nullptr;
@@ -328,8 +339,7 @@ void UCombatSystemComponent::EquipWeapon(FName InSocket, UAnimMontage* EquipMont
 		{
 			if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
 			{
-				Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::KeepWorldTransform, InSocket);
-				InterpolateWeaponToSocket(Weapon, InSocket);
+				Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, InSocket);
 				// L'animazione è terminata o interrotta: sblocca lo stato del personaggio
 				bIsEquippingWeapon = false;
 				// Aggiorna lo stato logico: l'arma è ora considerata equipaggiata
@@ -371,26 +381,5 @@ void UCombatSystemComponent::UnEquipWeapon(FName InSocket, UAnimMontage* UnEquip
 			AnimInstance->Montage_SetEndDelegate(OnMontageEnded, UnEquipMontage);
 		}
 	}
-}
-
-void UCombatSystemComponent::InterpolateWeaponToSocket(AWeaponBase* Weapon, FName Socket)
-{
-	GetWorld()->GetTimerManager().SetTimer(InterpolationTimer, [this, Weapon, Socket]
-	{
-		ElapsedTime += 0.01f;
-		float Alpha = FMath::Clamp(ElapsedTime / TotalDuration, 0.f, 1.f);
-		
-		FTransform End = OwnerRef->GetCharacterMesh()->GetSocketTransform(Socket, RTS_World);
-		FVector Loc = FMath::VInterpTo(Weapon->GetActorLocation(), End.GetLocation(), Alpha, TotalDuration);
-		FRotator Rot = FMath::RInterpTo(Weapon->GetActorRotation(), FRotator(End.GetRotation()), Alpha, TotalDuration);
-		Weapon->SetActorLocation(Loc);
-		Weapon->SetActorRotation(Rot);
-		
-		if (Alpha >= 1.f)
-		{
-			Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Socket);
-			GetWorld()->GetTimerManager().ClearTimer(InterpolationTimer);
-		}
-	}, 0.01f, true);
 }
 #pragma endregion
