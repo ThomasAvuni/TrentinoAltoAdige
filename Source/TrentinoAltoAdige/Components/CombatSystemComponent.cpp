@@ -5,8 +5,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Characters/Animation/CharacterAnimInstance.h"
 #include "TrentinoAltoAdige/Characters/Player/PlayerCharacter.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
@@ -30,6 +30,10 @@ void UCombatSystemComponent::BeginPlay()
 	OwnerRef = GetOwner<ICombatInterface>();
 	PlayerOwnerRef = GetOwner<APlayerCharacter>();
 	AnimInstance = Cast<UCharacterAnimInstance>(OwnerRef->GetCharacterMesh()->GetAnimInstance());
+	if (ACharacter* Char = GetOwner<ACharacter>())
+	{
+		DefaultMovementSpeed = Char->GetCharacterMovement()->MaxWalkSpeed; 
+	}
 }
 
 #pragma region Attack
@@ -296,16 +300,29 @@ void UCombatSystemComponent::StartTarget()
 
 void UCombatSystemComponent::NextTarget()
 {
-	if (bIsTargeting)
+	if (TargetActors.IsEmpty())
 	{
-		if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
-			Enemy->HideTargetWidget();		
-		
-		int32 NewIndex = ++TargetIndex % TargetActors.Num();
-		CurrentTargetActor = TargetActors[NewIndex];
-		if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
-			Enemy->ShowTargetWidget();
+		bIsTargeting = false;
+		CurrentTargetActor = nullptr;
+		return;
 	}
+	
+	if (ICombatInterface* OldTargetActor = Cast<ICombatInterface>(CurrentTargetActor))
+	{
+		OldTargetActor->HideTargetWidget();
+	}
+	
+	int32 NewIndex = ++TargetIndex % TargetActors.Num();
+	if (AActor* CandidateActor = TargetActors[NewIndex])
+	{
+		CurrentTargetActor = CandidateActor;
+		if (ICombatInterface* NewTargetActor = Cast<ICombatInterface>(CurrentTargetActor))
+		{
+			NewTargetActor->ShowTargetWidget();
+		}
+	}
+	else
+		CurrentTargetActor = nullptr;
 }
 
 void UCombatSystemComponent::StopTarget()
@@ -380,6 +397,30 @@ void UCombatSystemComponent::UnEquipWeapon(FName InSocket, UAnimMontage* UnEquip
 			//Registra il delegate appena creato specificamente per questo Montage
 			AnimInstance->Montage_SetEndDelegate(OnMontageEnded, UnEquipMontage);
 		}
+	}
+}
+#pragma endregion
+#pragma region Parry
+void UCombatSystemComponent::StartParry()
+{
+	if (bIsParrying || !bIsWeaponEquipped) return;
+	
+	bIsParrying = true;
+	AnimInstance->StopAllMontages(0.5f);
+	if (OwnerRef)
+	{
+		OwnerRef->SetMovementToWalk();
+	}
+}
+
+void UCombatSystemComponent::EndParry()
+{
+	if (!bIsParrying)
+		return;
+	bIsParrying = false;
+	if (OwnerRef)
+	{
+		OwnerRef->ResetMovement();
 	}
 }
 #pragma endregion

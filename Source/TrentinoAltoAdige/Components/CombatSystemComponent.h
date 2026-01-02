@@ -29,6 +29,8 @@ public:
 	void PerformTrace();
 	void ResetEnemiesHitThisAttack() {EnemiesHitThisAttack.Empty();}
 	void ApplyHitStop(AActor* Actor, float Duration, float TimeDilation) const;
+	UFUNCTION(BlueprintCallable)
+	bool IsParrying() const {return bIsParrying;}
 	
 	/*?-------------------|TARGETING | FUNCTIONS|--------------------*/
 	void Target();
@@ -46,6 +48,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	const bool& IsEquippingWeapon() const { return bIsEquippingWeapon; }
 	
+	/*?-------------------|Parry | FUNCTIONS|--------------------*/
+	void StartParry();
+	void EndParry();
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -60,14 +66,18 @@ protected:
 	TObjectPtr<AActor> CurrentHitActor;
 
 private:
-	/*?-------------------|ATTACK | VARS|--------------------*/
+	/*?-------------------|REFs|--------------------*/
 	ICombatInterface* OwnerRef;	//? Combat Owner Ref
 	TObjectPtr<class APlayerCharacter> PlayerOwnerRef; //? Ref of just the player
+	
+	/*?-------------------|ATTACK | VARS|--------------------*/
 	int32 AttackIndex = 0;		//? Index of the current attack in the array
 	bool bIsAttacking = false;	//? Flag if the character is attacking or not
 	bool bSaveCombo = false;	//? Flag to save the combo in the Montages
+	bool bIsParrying = false;
 	TSet<TObjectPtr<AActor>> EnemiesHitThisAttack;	//? Set of Actor Pointers hit this attack, so we don't hit the same Actor multiple times
 	UAnimMontage* CurrentAttackMontage;
+	float DefaultMovementSpeed = 0.f;
 	
 	/*?-------------------|TARGETING | VARS|--------------------*/
 	TArray<TObjectPtr<AActor>> TargetActors;

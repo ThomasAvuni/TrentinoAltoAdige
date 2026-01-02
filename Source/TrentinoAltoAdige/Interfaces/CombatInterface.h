@@ -30,4 +30,6 @@ public:
 	virtual void UnEquipWeapon() = 0;
 	virtual void ShowTargetWidget(){}
 	virtual void HideTargetWidget(){}
+	virtual void SetMovementToWalk(){}
+	virtual void ResetMovement(){}
 };

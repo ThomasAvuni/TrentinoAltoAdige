@@ -42,7 +42,6 @@ public:
 	const FName& GetIdleSocket() const { return IdleSocket; }
 	const FName& GetHandSocket() const { return HandSocket; }
 	const FName& GetBackSocket() const { return BackSocket; }
-	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -56,6 +55,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
 	TArray<FComboAttack> ComboAttacks;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
+	TObjectPtr<UAnimMontage> ParryMontage;
 	//Sound
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")
 	TObjectPtr<USoundBase> HitSound;

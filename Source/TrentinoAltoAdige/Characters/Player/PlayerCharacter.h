@@ -54,6 +54,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
 	UInputAction* NextTargetAction;
+		
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
+	UInputAction* Parry;
 	
 	/*?-------------------|COMPONENTS|--------------------*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
@@ -80,14 +83,23 @@ public:
 	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
 	virtual bool IsWeaponEquipped() const override {return CombatSystemComponent->IsWeaponEquipped();}
 	virtual void SnapToTarget() override {InternalSnapToTarget();}
+	virtual void SetMovementToWalk() override { InternalSetMovementToWalk(); }
+	virtual void ResetMovement() override  { InternalResetMovement(); }
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void InternalSnapToTarget();
 	void InternalNextTarget();
-	
+	void InternalStartParry();
+	void InternalStopParry();
+	UFUNCTION(BlueprintImplementableEvent)
+	void InternalSetMovementToWalk();
+	UFUNCTION(BlueprintImplementableEvent)
+	void InternalResetMovement();
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsSprinting = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bCanSprint = true;
 	
 	/*?-------------------|WEAPON | VARS|--------------------*/
 	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
@@ -95,15 +107,6 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<AWeaponBase> WeaponClass;
-
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-	bool bIsWeaponEquipped = false; */
-	
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-	bool bCanEquipWeapon = true; */
-
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon")
-	bool bIsEquippingWeapon = false; */
 	
 	/*?-------------------|WEAPON | FUNCTIONS|--------------------*/
 	UFUNCTION(BlueprintCallable)

@@ -62,6 +62,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &APlayerCharacter::InternalAttack);
 		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Started, this, &APlayerCharacter::InternalTarget);
 		EnhancedInputComponent->BindAction(NextTargetAction, ETriggerEvent::Started, this, &APlayerCharacter::InternalNextTarget);
+		EnhancedInputComponent->BindAction(Parry, ETriggerEvent::Started, this, &APlayerCharacter::InternalStartParry);
+		EnhancedInputComponent->BindAction(Parry, ETriggerEvent::Completed, this, &APlayerCharacter::InternalStopParry);
 	}
 }
 
@@ -111,4 +113,19 @@ void APlayerCharacter::InternalNextTarget()
 {
 	if (CombatSystemComponent)
 		CombatSystemComponent->NextTarget();
+}
+
+void APlayerCharacter::InternalStartParry()
+{
+	bCanSprint = false;
+	if (CombatSystemComponent)
+		CombatSystemComponent->StartParry();
+}
+
+void APlayerCharacter::InternalStopParry()
+{
+	bCanSprint = true;
+	
+	if (CombatSystemComponent)
+		CombatSystemComponent->EndParry();
 }
