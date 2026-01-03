@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Characters/Animation/CharacterAnimInstance.h"
 #include "TrentinoAltoAdige/Characters/Player/PlayerCharacter.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
@@ -34,11 +35,13 @@ void UCombatSystemComponent::BeginPlay()
 	{
 		DefaultMovementSpeed = Char->GetCharacterMovement()->MaxWalkSpeed; 
 	}
+	OnWeaponUpgraded.Broadcast(1);
 }
 
 #pragma region Attack
 void UCombatSystemComponent::Attack()
 {
+	if (bIsParrying) return;
 	// Controllo rapido: se non è equipaggiata un'arma non procedere.
 	if (!OwnerRef->IsWeaponEquipped()) return;
 
@@ -57,7 +60,7 @@ void UCombatSystemComponent::Attack()
 				Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
 
 				// Ottengo gli attacchi a combo definiti dall'arma.
-				const TArray<FComboAttack>& ComboAttacks = Weapon->GetWeaponComboAttacks();
+				const TArray<FAttack>& ComboAttacks = Weapon->GetWeaponComboAttacks();
 				int32 CurrentAttackIndex = AttackIndex % ComboAttacks.Num();
 
 				// Se il montage dell'attacco esiste, lo eseguo.
@@ -84,32 +87,6 @@ void UCombatSystemComponent::Attack()
 			}
 		}
 	}
-}
-
-void UCombatSystemComponent::SaveCombo()
-{
-	// Se attualmente in attacco, permetto di salvare la combo per concatenare l'attacco successivo.
-	if (bIsAttacking)
-		bSaveCombo = true;
-	else
-		AnimInstance->Montage_Stop(0.f, CurrentAttackMontage);
-}
-
-void UCombatSystemComponent::ResetCombo()
-{
-	// Ripristino la camera del player se necessario.
-	if (PlayerOwnerRef)
-		PlayerOwnerRef->ResetCam();
-	
-	// Reset degli stati e dei riferimenti relativi alla combo.
-	bSaveCombo = false;
-	bIsAttacking = false;
-	CurrentHitActor = nullptr;
-	AttackIndex = 0;
-
-	// Riattacco l'arma alla socket di idle (posizione a riposo).
-	if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
-		Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordIdleSocket"));
 }
 
 void UCombatSystemComponent::PerformTrace()
@@ -170,6 +147,10 @@ void UCombatSystemComponent::PerformTrace()
 					{
 					}
 					
+					float Damage = CalculateDamage(Weapon->GetWeaponBaseDamage());
+
+					DBG_LINE("{}", Damage);
+					
 					// Memorizzo l'attore corrente colpito
 					CurrentHitActor = bIsTargeting ? CurrentTargetActor.Get() : HitActor;
 					// Applico hit stop temporale per effetto impatto
@@ -179,6 +160,38 @@ void UCombatSystemComponent::PerformTrace()
 		}
 	}
 }
+
+void UCombatSystemComponent::SaveCombo()
+{
+	// Se attualmente in attacco, permetto di salvare la combo per concatenare l'attacco successivo.
+	if (bIsAttacking)
+		bSaveCombo = true;
+	else
+		AnimInstance->Montage_Stop(0.f, CurrentAttackMontage);
+}
+
+void UCombatSystemComponent::ResetCombo()
+{
+	// Ripristino la camera del player se necessario.
+	if (PlayerOwnerRef)
+		PlayerOwnerRef->ResetCam();
+	
+	// Reset degli stati e dei riferimenti relativi alla combo.
+	bSaveCombo = false;
+	bIsAttacking = false;
+	CurrentHitActor = nullptr;
+	AttackIndex = 0;
+
+	// Riattacco l'arma alla socket di idle (posizione a riposo).
+	if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+		Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordIdleSocket"));
+}
+float UCombatSystemComponent::CalculateDamage(float WeaponBaseDamage) const
+{
+	float Multiplier = 1.f + (DamageMultiplierPerLevel * (CurrentWeaponLevel - 1));
+	return WeaponBaseDamage * Multiplier;
+}
+
 
 void UCombatSystemComponent::ApplyHitStop(AActor* Actor, float Duration, float TimeDilation) const
 {
@@ -216,22 +229,6 @@ void UCombatSystemComponent::StartTarget()
 	float CapsuleRadius = 650.f;
 	FVector Dir = End - Start;
 	float Distance = Dir.Size();
-#if DEBUG_BUILD && 0
-	// debug draw: sphere su start/end, linea e capsule lungo la direzione
-	DrawDebugSphere(GetWorld(), Start, 8.f, 12, FColor::Yellow, false, 2.f);
-	DrawDebugSphere(GetWorld(), End, 8.f, 12, FColor::Blue, false, 2.f);
-	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f, 0, 2.f);
-
-
-	if (Distance > KINDA_SMALL_NUMBER)
-	{
-		FVector DirNormal = Dir / Distance;
-		FVector Center = Start + Dir * 0.5f;
-		float HalfHeight = FMath::Max(10.f, Distance * 0.5f);
-		FQuat CapsuleQuat = FRotationMatrix::MakeFromZ(DirNormal).ToQuat();
-		DrawDebugCapsule(GetWorld(), Center, HalfHeight, CapsuleRadius, CapsuleQuat, FColor::Red, false, 2.f, 0, 1.f);
-	}
-#endif
 	TArray<FHitResult> HitResults;
 	FCollisionObjectQueryParams QueryParams;
 	QueryParams.AddObjectTypesToQuery(ECC_Pawn);
@@ -400,13 +397,13 @@ void UCombatSystemComponent::UnEquipWeapon(FName InSocket, UAnimMontage* UnEquip
 	}
 }
 #pragma endregion
+
 #pragma region Parry
 void UCombatSystemComponent::StartParry()
 {
 	if (bIsParrying || !bIsWeaponEquipped) return;
 	
 	bIsParrying = true;
-	AnimInstance->StopAllMontages(0.5f);
 	if (OwnerRef)
 	{
 		OwnerRef->SetMovementToWalk();
@@ -423,4 +420,56 @@ void UCombatSystemComponent::EndParry()
 		OwnerRef->ResetMovement();
 	}
 }
+#pragma endregion
+
+#pragma region WeaponLeveling
+void UCombatSystemComponent::UpgradeWeapon(/*!SOSTITUIRE CON INVENTORYCOMPONENT*/int32 NumberOfShards)
+{
+	int32 CostNeededForUpgrade = GetUpgradeCostForLevel(CurrentWeaponLevel);
+	if (CurrentWeaponLevel < MaxWeaponLevel)
+	{
+		if (NumberOfShards >= CostNeededForUpgrade)
+		{
+			CurrentWeaponLevel++;
+			//Chiamata all'inventorycomponent e diminuire il numero di shards
+			UpdateWeaponMesh(CurrentWeaponLevel);
+			OnWeaponUpgraded.Broadcast(CurrentWeaponLevel);
+		}
+		else
+		{
+			int32 Diff = CostNeededForUpgrade - NumberOfShards;
+			FString Messaggio = FString::Printf(TEXT("Impossibile migliorare l'arma, sono richieste %d shards, ma tu ne hai solo %d, te ne mancano %d"), CostNeededForUpgrade, NumberOfShards, Diff);
+			OnWeaponFailedUpgrade.Broadcast(Messaggio);
+		}
+	}
+	else
+	{
+		FString Messaggio = FString::Printf(TEXT("Impossibile migliorare l'arma, è già al livello massimo (%d)"), MaxWeaponLevel);
+		OnWeaponFailedUpgrade.Broadcast(Messaggio);
+	}
+}
+
+void UCombatSystemComponent::UpdateWeaponMesh(int32 WeaponLevel)
+{
+	if (!WeaponMeshes.IsEmpty())
+	{
+		if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+		{
+			int32 NewMeshIndex = WeaponLevel - 1;
+			if (WeaponMeshes.IsValidIndex(NewMeshIndex))
+			{
+				if (USkeletalMesh* NewMesh = WeaponMeshes[NewMeshIndex])
+				{
+					Weapon->SetNewLevelMesh(NewMesh);
+				}
+			}
+		}
+	}
+}
+
+int32 UCombatSystemComponent::GetUpgradeCostForLevel(int32 Level) const
+{
+	return FMath::RoundToInt(BaseCostForUpgrade * FMath::Pow(CostMultiplier, Level - 1));
+}
+
 #pragma endregion

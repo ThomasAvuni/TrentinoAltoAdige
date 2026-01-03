@@ -7,7 +7,7 @@
 #include "WeaponBase.generated.h"
 
 USTRUCT(BlueprintType)
-struct FComboAttack
+struct FAttack
 {
 	GENERATED_BODY()
 
@@ -33,11 +33,16 @@ public:
 	const float& GetWeaponBaseDamage() const {return WeaponBaseDamage;}
 	
 	UFUNCTION(BlueprintCallable)
-	const TArray<FComboAttack>& GetWeaponComboAttacks() const {return ComboAttacks;}
+	const TArray<FAttack>& GetWeaponComboAttacks() const {return ComboAttacks;}
 
 	const TObjectPtr<USoundBase>& GetWeaponHitSound() const {return HitSound;}
 
 	USkeletalMeshComponent* GetMesh() const {return WeaponMesh;}
+
+	UFUNCTION(BlueprintImplementableEvent)
+	USceneComponent* GetLeftHandIKSceneComponent();
+
+	void SetNewLevelMesh(USkeletalMesh* NewMesh);
 	
 	const FName& GetIdleSocket() const { return IdleSocket; }
 	const FName& GetHandSocket() const { return HandSocket; }
@@ -53,7 +58,7 @@ protected:
 	float WeaponBaseDamage = 20.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
-	TArray<FComboAttack> ComboAttacks;
+	TArray<FAttack> ComboAttacks;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
 	TObjectPtr<UAnimMontage> ParryMontage;

@@ -3,6 +3,8 @@
 
 #include "WeaponBase.h"
 
+#include "TrentinoAltoAdige/DebugMacros.h"
+
 
 // Sets default values
 AWeaponBase::AWeaponBase()
@@ -10,6 +12,11 @@ AWeaponBase::AWeaponBase()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>("WeaponMesh");
+}
+
+void AWeaponBase::SetNewLevelMesh(USkeletalMesh* NewMesh)
+{
+	WeaponMesh->SetSkeletalMesh(NewMesh);
 }
 
 // Called when the game starts or when spawned
