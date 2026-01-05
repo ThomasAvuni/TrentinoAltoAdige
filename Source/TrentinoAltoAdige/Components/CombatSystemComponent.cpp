@@ -471,5 +471,4 @@ int32 UCombatSystemComponent::GetUpgradeCostForLevel(int32 Level) const
 {
 	return FMath::RoundToInt(BaseCostForUpgrade * FMath::Pow(CostMultiplier, Level - 1));
 }
-
 #pragma endregion

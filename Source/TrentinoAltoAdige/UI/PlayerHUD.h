@@ -15,13 +15,17 @@ UCLASS()
 class TRENTINOALTOADIGE_API APlayerHUD : public AHUD
 {
 	GENERATED_BODY()
-
+	
+public:
+	void ShowUpgradeWeaponWidget();
+	void HideUpgradeWeaponWidget();
+	TObjectPtr<UWeaponUpgradeWidget> GetWeaponUpgradeWidget() const { return WeaponUpgradeWidget; }
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UWeaponUpgradeWidget> WeaponUpgradeWidgetClass;
 	TObjectPtr<UWeaponUpgradeWidget> WeaponUpgradeWidget;
-	
+
 private:
 	TObjectPtr<APlayerCharacter> PlayerRef;
 	UFUNCTION()

@@ -20,6 +20,7 @@ void APlayerHUD::BeginPlay()
 		if (WeaponUpgradeWidget)
 		{
 			WeaponUpgradeWidget->AddToViewport();
+			WeaponUpgradeWidget->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
 
@@ -28,7 +29,6 @@ void APlayerHUD::BeginPlay()
 		PlayerRef->GetCombatSystemComponent()->OnWeaponUpgraded.AddDynamic(this, &APlayerHUD::HandleWeaponLevelUpdate);
 		PlayerRef->GetCombatSystemComponent()->OnWeaponFailedUpgrade.AddDynamic(this, &APlayerHUD::HandleWeaponFailedUpgrade);
 	}
-	
 }
 
 void APlayerHUD::HandleWeaponLevelUpdate(int32 NewLevel)
@@ -44,5 +44,21 @@ void APlayerHUD::HandleWeaponFailedUpgrade(FString Message)
 	if (WeaponUpgradeWidget)
 	{
 		WeaponUpgradeWidget->UpdateWeaponFailedUpgradeMessage(Message);
+	}
+}
+
+void APlayerHUD::ShowUpgradeWeaponWidget()
+{
+	if (WeaponUpgradeWidget)
+	{
+		WeaponUpgradeWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void APlayerHUD::HideUpgradeWeaponWidget()
+{
+	if (WeaponUpgradeWidget)
+	{
+		WeaponUpgradeWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }

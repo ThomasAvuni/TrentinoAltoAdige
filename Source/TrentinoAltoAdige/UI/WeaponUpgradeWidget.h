@@ -19,4 +19,7 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateWeaponFailedUpgradeMessage(const FString& Message);
+	
+	UFUNCTION(BlueprintCallable)
+	void UpgradeWeapon();
 };

@@ -9,6 +9,7 @@
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
+#include "TrentinoAltoAdige/Interfaces/InteractionInterface.h"
 
 #include "PlayerCharacter.generated.h"
 
@@ -58,6 +59,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
 	UInputAction* Parry;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
+	UInputAction* InterAction;
+	
 	/*?-------------------|COMPONENTS|--------------------*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
 	UCombatSystemComponent* CombatSystemComponent;
@@ -74,7 +78,10 @@ public:
 	void ResetCam();
 	UFUNCTION(BlueprintImplementableEvent)
 	UCameraComponent* GetCamera();
-	
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartShopCameraAnimation();
+	UFUNCTION(BlueprintImplementableEvent)
+	void StopShopCameraAnimation();
 	/*?-------------------|INTERFACES|--------------------*/
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
@@ -95,6 +102,9 @@ public:
 	void InternalSetMovementToWalk();
 	UFUNCTION(BlueprintImplementableEvent)
 	void InternalResetMovement();
+	UFUNCTION(BlueprintCallable)
+	void ResetPlayerMovement();
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsSprinting = false;
@@ -125,6 +135,16 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EWeaponHoldingType WeaponHolding;
+
+	/*?-------------------|Interaction|--------------------*/
+	void Interact();
+	UFUNCTION(BlueprintCallable)
+	void InternalStopInteract();
+	void CheckForInteraction();
+	float InteractionCheckFreq = 0.15f;
+	FTimerHandle InteractionTimer;
+	IInteractionInterface* CurrentInteractable;
+	IInteractionInterface* ActiveInteractionSession;
 	
 	/*?-------------------|ANIMATIONS|--------------------*/
 	TObjectPtr<UAnimInstance> AnimInstance;

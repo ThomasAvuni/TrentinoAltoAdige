@@ -4,7 +4,11 @@
 #include "PlayerCharacter.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
+#include "TrentinoAltoAdige/UI/PlayerHUD.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -21,6 +25,8 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	GetWorldTimerManager().SetTimer(InteractionTimer, this, &APlayerCharacter::CheckForInteraction, InteractionCheckFreq, true);
 
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
@@ -44,11 +50,6 @@ void APlayerCharacter::BeginPlay()
 
 	AnimInstance = GetMesh()->GetAnimInstance();
 	
-//!!TEMP: SOLO PER DEBUG
-#if DEBUG_BUILD && 0
-	EquipWeapon();
-#endif
-	
 }
 
 // Called to bind functionality to input
@@ -64,6 +65,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(NextTargetAction, ETriggerEvent::Started, this, &APlayerCharacter::InternalNextTarget);
 		EnhancedInputComponent->BindAction(Parry, ETriggerEvent::Started, this, &APlayerCharacter::InternalStartParry);
 		EnhancedInputComponent->BindAction(Parry, ETriggerEvent::Completed, this, &APlayerCharacter::InternalStopParry);
+		EnhancedInputComponent->BindAction(InterAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 	}
 }
 
@@ -101,6 +103,7 @@ void APlayerCharacter::InternalAttack()
 {
 	CombatSystemComponent->Attack();
 }
+
 #pragma endregion
 
 void APlayerCharacter::InternalTarget()
@@ -129,3 +132,85 @@ void APlayerCharacter::InternalStopParry()
 	if (CombatSystemComponent)
 		CombatSystemComponent->EndParry();
 }
+
+void APlayerCharacter::ResetPlayerMovement()
+{
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+}
+
+void APlayerCharacter::Interact()
+{
+	//(X=25.683607,Y=29.999998,Z=37.950425)
+	/*
+	* {
+	"Tagged": [
+		[
+			"RelativeLocation",
+			"(X=93.657124,Y=109.178393,Z=32.362580)"
+		],
+		[
+			"RelativeRotation",
+			"(Pitch=-3.136040,Yaw=-8.103552,Roll=-1.380143)"
+		],
+		[
+			"RelativeScale3D",
+			"(X=1.000000,Y=1.000000,Z=1.000000)"
+		],
+		[
+			"Mobility",
+			"Movable"
+		]
+	]
+}
+	 */
+	if (ActiveInteractionSession) return;
+	
+	if (CurrentInteractable)
+	{
+		EInteractionType Type = CurrentInteractable->GetInteractionType();
+		if (Type == Duration)
+		{
+			ActiveInteractionSession = CurrentInteractable;	
+		}
+		
+		CurrentInteractable->Interact(this);
+	}
+}
+
+void APlayerCharacter::InternalStopInteract()
+{
+	if (ActiveInteractionSession)
+	{
+		ActiveInteractionSession->StopInteract();
+		ActiveInteractionSession = nullptr;
+	}
+}
+
+void APlayerCharacter::CheckForInteraction()
+{
+	FVector Start = GetActorLocation() + FVector(0, 0, 88.f);
+	FVector End = Start + (GetCamera()->GetForwardVector() * 400.f);
+	FHitResult HitResult;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_GameTraceChannel1, Params))
+	{
+		if (IInteractionInterface* Interaction = Cast<IInteractionInterface>(HitResult.GetActor()))
+		{
+			DrawDebugLine(GetWorld(), Start, End, HitResult.bBlockingHit ? FColor::Green : FColor::Red, false, 1.0f, 0, 2.0f);
+			CurrentInteractable = Interaction;
+			CurrentInteractable->ShowInteractionWidget();
+		}
+		else
+		{
+			CurrentInteractable = nullptr;
+		}
+	}
+	else
+	{
+		if (CurrentInteractable)
+			CurrentInteractable->HideInteractionWidget();
+		CurrentInteractable = nullptr;
+	}
+} 
