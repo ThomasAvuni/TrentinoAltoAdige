@@ -3,7 +3,6 @@
 
 #include "Shop.h"
 
-#include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -40,19 +39,21 @@ void AShop::Interact(AActor* Interactor)
 			if (APlayerCharacter* Character = Cast<APlayerCharacter>(ControlledPawn))
 			{
 				Character->GetCharacterMovement()->StopMovementImmediately();
-				Character->DisableInput(Controller);
 				Character->GetCharacterMovement()->DisableMovement();
+				Character->GetController()->SetIgnoreLookInput(true);
 				Character->StartShopCameraAnimation();
 			}
 		}
 
 		if (APlayerHUD* HUD = Cast<APlayerHUD>(Controller->GetHUD()))
 		{
-			FInputModeUIOnly Mode;
+			// FInputModeUIOnly Mode;
+			FInputModeGameAndUI Mode;
 			Mode.SetWidgetToFocus(HUD->GetWeaponUpgradeWidget()->TakeWidget());
 			Controller->SetInputMode(Mode);
 			Controller->bShowMouseCursor = true;
 			HUD->ShowUpgradeWeaponWidget();
+			HUD->GetWeaponUpgradeWidget()->ActivateWidget();
 		}
 	}
 }
@@ -77,6 +78,7 @@ void AShop::StopInteract()
 			Controller->SetInputMode(Mode);
 			Controller->bShowMouseCursor = false;
 			HUD->HideUpgradeWeaponWidget();
+			HUD->GetWeaponUpgradeWidget()->DeactivateWidget();
 		}
 	}
 }

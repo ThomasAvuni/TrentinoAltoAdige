@@ -1,16 +1,14 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "CommonButtonBase.h"
+#include "CommonActivatableWidget.h"
 #include "WeaponUpgradeWidget.generated.h"
-
 /**
  * 
  */
 UCLASS()
-class TRENTINOALTOADIGE_API UWeaponUpgradeWidget : public UUserWidget
+class TRENTINOALTOADIGE_API UWeaponUpgradeWidget : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 public:
@@ -22,4 +20,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void UpgradeWeapon();
+	
+	UCommonButtonBase
 };

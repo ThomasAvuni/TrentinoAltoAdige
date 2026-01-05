@@ -91,7 +91,6 @@ private:
 	bool bIsParrying = false;
 	TSet<TObjectPtr<AActor>> EnemiesHitThisAttack;	//? Set of Actor Pointers hit this attack, so we don't hit the same Actor multiple times
 	UAnimMontage* CurrentAttackMontage;
-	float DefaultMovementSpeed = 0.f;
 	/*?-------------------|ATTACK | VARS|--------------------*/
 	
 	/*?-------------------|TARGETING | VARS|--------------------*/

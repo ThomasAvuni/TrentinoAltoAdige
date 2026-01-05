@@ -62,6 +62,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
 	UInputAction* InterAction;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
+	UInputAction* BackAction;
+
+	void HandleBackAction();
+	
 	/*?-------------------|COMPONENTS|--------------------*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
 	UCombatSystemComponent* CombatSystemComponent;
@@ -82,6 +87,7 @@ public:
 	void StartShopCameraAnimation();
 	UFUNCTION(BlueprintImplementableEvent)
 	void StopShopCameraAnimation();
+	
 	/*?-------------------|INTERFACES|--------------------*/
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
@@ -92,7 +98,6 @@ public:
 	virtual void SnapToTarget() override {InternalSnapToTarget();}
 	virtual void SetMovementToWalk() override { InternalSetMovementToWalk(); }
 	virtual void ResetMovement() override  { InternalResetMovement(); }
-	
 	UFUNCTION(BlueprintImplementableEvent)
 	void InternalSnapToTarget();
 	void InternalNextTarget();
@@ -110,7 +115,8 @@ protected:
 	bool bIsSprinting = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanSprint = true;
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bIsPaused = false;	
 	/*?-------------------|WEAPON | VARS|--------------------*/
 	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<class AWeaponBase> CurrentWeapon;

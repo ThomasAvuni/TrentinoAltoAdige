@@ -66,7 +66,14 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(Parry, ETriggerEvent::Started, this, &APlayerCharacter::InternalStartParry);
 		EnhancedInputComponent->BindAction(Parry, ETriggerEvent::Completed, this, &APlayerCharacter::InternalStopParry);
 		EnhancedInputComponent->BindAction(InterAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
+		EnhancedInputComponent->BindAction(BackAction, ETriggerEvent::Started, this, &APlayerCharacter::HandleBackAction);
 	}
+}
+
+void APlayerCharacter::HandleBackAction()
+{
+	if (ActiveInteractionSession)
+		InternalStopInteract();
 }
 
 #pragma region Weapon
@@ -136,7 +143,9 @@ void APlayerCharacter::InternalStopParry()
 void APlayerCharacter::ResetPlayerMovement()
 {
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	GetController()->SetIgnoreLookInput(false);
 	EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	
 }
 
 void APlayerCharacter::Interact()
@@ -198,7 +207,6 @@ void APlayerCharacter::CheckForInteraction()
 	{
 		if (IInteractionInterface* Interaction = Cast<IInteractionInterface>(HitResult.GetActor()))
 		{
-			DrawDebugLine(GetWorld(), Start, End, HitResult.bBlockingHit ? FColor::Green : FColor::Red, false, 1.0f, 0, 2.0f);
 			CurrentInteractable = Interaction;
 			CurrentInteractable->ShowInteractionWidget();
 		}

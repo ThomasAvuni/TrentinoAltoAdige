@@ -31,10 +31,6 @@ void UCombatSystemComponent::BeginPlay()
 	OwnerRef = GetOwner<ICombatInterface>();
 	PlayerOwnerRef = GetOwner<APlayerCharacter>();
 	AnimInstance = Cast<UCharacterAnimInstance>(OwnerRef->GetCharacterMesh()->GetAnimInstance());
-	if (ACharacter* Char = GetOwner<ACharacter>())
-	{
-		DefaultMovementSpeed = Char->GetCharacterMovement()->MaxWalkSpeed; 
-	}
 	OnWeaponUpgraded.Broadcast(1);
 }
 
@@ -53,7 +49,7 @@ void UCombatSystemComponent::Attack()
 	{
 		if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
 		{
-			// Ottengo l'anim instance della mesh del personaggio (per riprodurre montage).
+			// Ottengo l'AnimInstance della mesh del personaggio (per riprodurre montage).
 			if (AnimInstance)
 			{
 				// Assicuro che l'arma sia attaccata alla socket della mano per l'attacco.
@@ -99,7 +95,7 @@ void UCombatSystemComponent::PerformTrace()
 		float fRadius = 20.f; // raggio della sfera usata per lo sweep
 		FHitResult HitResult;
 
-		// Solo oggetti di tipo Pawn (es. nemici)
+		//Solo oggetti di tipo Pawn (es. nemici)
 		FCollisionObjectQueryParams CollisionObjectQueryParams;
 		CollisionObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
 
