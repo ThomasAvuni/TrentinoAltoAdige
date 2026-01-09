@@ -21,5 +21,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UpgradeWeapon();
 	
-	UCommonButtonBase
+protected:
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UCommonButtonBase* StartButton;
+	
+	virtual UWidget* NativeGetDesiredFocusTarget() const override {return StartButton;}
 };

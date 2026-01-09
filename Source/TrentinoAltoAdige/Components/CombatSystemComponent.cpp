@@ -53,7 +53,7 @@ void UCombatSystemComponent::Attack()
 			if (AnimInstance)
 			{
 				// Assicuro che l'arma sia attaccata alla socket della mano per l'attacco.
-				Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordHandSocket"));
+				Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetHandSocket());
 
 				// Ottengo gli attacchi a combo definiti dall'arma.
 				const TArray<FAttack>& ComboAttacks = Weapon->GetWeaponComboAttacks();
@@ -178,9 +178,13 @@ void UCombatSystemComponent::ResetCombo()
 	CurrentHitActor = nullptr;
 	AttackIndex = 0;
 
+	AnimInstance->Montage_Stop(0.f, CurrentAttackMontage);
+	
 	// Riattacco l'arma alla socket di idle (posizione a riposo).
 	if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
-		Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordIdleSocket"));
+	{
+		Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetIdleSocket());
+	}
 }
 float UCombatSystemComponent::CalculateDamage(float WeaponBaseDamage) const
 {
@@ -270,7 +274,7 @@ void UCombatSystemComponent::StartTarget()
 		CurrentTargetActor = BestInCone ? BestInCone : ClosestActor;
 	}
 
-	if (CurrentTargetActor)
+	if (CurrentTargetActor.IsValid())
 	{
 		if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
 			Enemy->ShowTargetWidget();
@@ -403,6 +407,10 @@ void UCombatSystemComponent::StartParry()
 	if (OwnerRef)
 	{
 		OwnerRef->SetMovementToWalk();
+		if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+		{
+			Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetIdleSocket());
+		}
 	}
 }
 
@@ -414,6 +422,10 @@ void UCombatSystemComponent::EndParry()
 	if (OwnerRef)
 	{
 		OwnerRef->ResetMovement();
+		if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+		{
+			Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetIdleSocket());
+		}
 	}
 }
 #pragma endregion

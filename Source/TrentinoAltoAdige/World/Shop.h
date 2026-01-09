@@ -20,7 +20,6 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 public:
 	virtual void Interact(AActor* Interactor) override;
 	virtual void StopInteract() override;

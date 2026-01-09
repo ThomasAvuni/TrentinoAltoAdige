@@ -36,4 +36,5 @@ public:
 	virtual void ShowInteractionWidget() = 0;
 	virtual void HideInteractionWidget() = 0;
 	virtual EInteractionType GetInteractionType() = 0;
+	virtual class UInputMappingContext* GetInteractionMappingContext() = 0;
 };

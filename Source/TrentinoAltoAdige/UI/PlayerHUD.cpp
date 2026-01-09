@@ -19,8 +19,8 @@ void APlayerHUD::BeginPlay()
 		WeaponUpgradeWidget = CreateWidget<UWeaponUpgradeWidget>(GetWorld(), WeaponUpgradeWidgetClass);
 		if (WeaponUpgradeWidget)
 		{
-			WeaponUpgradeWidget->AddToViewport();
-			WeaponUpgradeWidget->SetVisibility(ESlateVisibility::Collapsed);
+			// WeaponUpgradeWidget->AddToViewport();
+			// WeaponUpgradeWidget->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
 

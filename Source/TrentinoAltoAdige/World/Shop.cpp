@@ -40,20 +40,22 @@ void AShop::Interact(AActor* Interactor)
 			{
 				Character->GetCharacterMovement()->StopMovementImmediately();
 				Character->GetCharacterMovement()->DisableMovement();
+				Character->DisableInput(Controller);
 				Character->GetController()->SetIgnoreLookInput(true);
 				Character->StartShopCameraAnimation();
+				Character->bIsInShop = true;
 			}
 		}
 
 		if (APlayerHUD* HUD = Cast<APlayerHUD>(Controller->GetHUD()))
 		{
-			// FInputModeUIOnly Mode;
-			FInputModeGameAndUI Mode;
-			Mode.SetWidgetToFocus(HUD->GetWeaponUpgradeWidget()->TakeWidget());
-			Controller->SetInputMode(Mode);
-			Controller->bShowMouseCursor = true;
-			HUD->ShowUpgradeWeaponWidget();
-			HUD->GetWeaponUpgradeWidget()->ActivateWidget();
+			if (UWeaponUpgradeWidget* Widget = HUD->GetWeaponUpgradeWidget())
+			{
+				FInputModeUIOnly Mode;
+				Controller->SetInputMode(Mode);
+				Controller->bShowMouseCursor = true;
+				Widget->AddToViewport();
+			}
 		}
 	}
 }
@@ -69,16 +71,17 @@ void AShop::StopInteract()
 			if (APlayerCharacter* Character = Cast<APlayerCharacter>(ControlledPawn))
 			{
 				Character->StopShopCameraAnimation();
+				Character->bIsInShop = false;
 			}
 		}
 		
 		if (APlayerHUD* HUD = Cast<APlayerHUD>(Controller->GetHUD()))
 		{
-			FInputModeGameOnly Mode;
-			Controller->SetInputMode(Mode);
 			Controller->bShowMouseCursor = false;
-			HUD->HideUpgradeWeaponWidget();
-			HUD->GetWeaponUpgradeWidget()->DeactivateWidget();
+			if (UWeaponUpgradeWidget* Widget = HUD->GetWeaponUpgradeWidget())
+			{
+				Widget->RemoveFromParent();
+			}
 		}
 	}
 }

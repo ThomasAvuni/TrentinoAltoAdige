@@ -61,11 +61,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
 	UInputAction* InterAction;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
-	UInputAction* BackAction;
 
-	void HandleBackAction();
+	UPROPERTY(EditDefaultsOnly, Category = "Input | Actions")
+	UInputAction* PauseMenuAction;
 	
 	/*?-------------------|COMPONENTS|--------------------*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
@@ -74,6 +72,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void PauseGame();
+	
 	/*?-------------------|BLUEPRINT HOOKS|--------------------*/
 	UFUNCTION(BlueprintImplementableEvent)
 	void CameraShake();
@@ -83,10 +83,12 @@ public:
 	void ResetCam();
 	UFUNCTION(BlueprintImplementableEvent)
 	UCameraComponent* GetCamera();
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Gameplay")
 	void StartShopCameraAnimation();
 	UFUNCTION(BlueprintImplementableEvent)
 	void StopShopCameraAnimation();
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bIsInShop = false;
 	
 	/*?-------------------|INTERFACES|--------------------*/
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
@@ -117,6 +119,7 @@ protected:
 	bool bCanSprint = true;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsPaused = false;	
+
 	/*?-------------------|WEAPON | VARS|--------------------*/
 	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<class AWeaponBase> CurrentWeapon;
@@ -128,8 +131,10 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ToggleWeapon();
 
+public:	
 	UFUNCTION(BlueprintCallable)
 	void InternalEquipWeapon();
+protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void InternalUnEquipWeapon();
@@ -147,6 +152,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void InternalStopInteract();
 	void CheckForInteraction();
+	void StopInteract();
 	float InteractionCheckFreq = 0.15f;
 	FTimerHandle InteractionTimer;
 	IInteractionInterface* CurrentInteractable;
@@ -161,4 +167,3 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
 	TObjectPtr<UAnimMontage> UnEquipFromHandWeapon;
 };
-

@@ -38,4 +38,5 @@ public:
 	virtual void ShowInteractionWidget() override;
 	virtual void HideInteractionWidget() override;
 	virtual EInteractionType GetInteractionType() override;
+	virtual UInputMappingContext* GetInteractionMappingContext() override {return nullptr;}
 };

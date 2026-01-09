@@ -2,11 +2,13 @@
 
 
 #include "PlayerCharacter.h"
+#include "PlayerCharacter.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/UI/PlayerHUD.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
@@ -66,14 +68,27 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(Parry, ETriggerEvent::Started, this, &APlayerCharacter::InternalStartParry);
 		EnhancedInputComponent->BindAction(Parry, ETriggerEvent::Completed, this, &APlayerCharacter::InternalStopParry);
 		EnhancedInputComponent->BindAction(InterAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
-		EnhancedInputComponent->BindAction(BackAction, ETriggerEvent::Started, this, &APlayerCharacter::HandleBackAction);
+		EnhancedInputComponent->BindAction(PauseMenuAction, ETriggerEvent::Started, this, &APlayerCharacter::PauseGame);
 	}
 }
 
-void APlayerCharacter::HandleBackAction()
+void APlayerCharacter::PauseGame()
+{
+	DBG_LINE("PauseGame");
+}
+
+void APlayerCharacter::StopInteract()
 {
 	if (ActiveInteractionSession)
 		InternalStopInteract();
+}
+
+void APlayerCharacter::StartShopCameraAnimation_Implementation()
+{
+	if (!CombatSystemComponent->IsWeaponEquipped())
+	{
+		InternalEquipWeapon();
+	}
 }
 
 #pragma region Weapon
@@ -145,7 +160,11 @@ void APlayerCharacter::ResetPlayerMovement()
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	GetController()->SetIgnoreLookInput(false);
 	EnableInput(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-	
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+	{
+		FInputModeGameOnly Mode;
+		PlayerController->SetInputMode(Mode);
+	}
 }
 
 void APlayerCharacter::Interact()
@@ -182,7 +201,24 @@ void APlayerCharacter::Interact()
 		{
 			ActiveInteractionSession = CurrentInteractable;	
 		}
-		
+
+		if (ActiveInteractionSession)
+		{
+			if (UInputMappingContext* Context =  ActiveInteractionSession->GetInteractionMappingContext())
+			{
+				if (APlayerController* PC = Cast<APlayerController>(GetController()))
+				{
+					if (ULocalPlayer* LP = PC->GetLocalPlayer())
+					{
+						if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+						{
+							Subsystem->RemoveMappingContext(InputMappingContext);
+							Subsystem->AddMappingContext(Context, 1);
+						}
+					}
+				}
+			}
+		}
 		CurrentInteractable->Interact(this);
 	}
 }
@@ -191,6 +227,21 @@ void APlayerCharacter::InternalStopInteract()
 {
 	if (ActiveInteractionSession)
 	{
+		if (UInputMappingContext* Context =  ActiveInteractionSession->GetInteractionMappingContext())
+		{
+			if (APlayerController* PC = Cast<APlayerController>(GetController()))
+			{
+				if (ULocalPlayer* LP = PC->GetLocalPlayer())
+				{
+					if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+					{
+						Subsystem->RemoveMappingContext(Context);
+						Subsystem->AddMappingContext(InputMappingContext, 0);
+					}
+				}
+			}
+		}
+		
 		ActiveInteractionSession->StopInteract();
 		ActiveInteractionSession = nullptr;
 	}

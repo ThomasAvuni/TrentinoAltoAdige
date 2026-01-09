@@ -76,7 +76,7 @@ protected:
 	float HitStopTimeDilation = 0.12f;
 	
 	UPROPERTY(BlueprintReadWrite)
-	TObjectPtr<AActor> CurrentHitActor;
+	TWeakObjectPtr<AActor> CurrentHitActor;
 
 private:
 	/*?-------------------|REFs|--------------------*/
@@ -96,7 +96,7 @@ private:
 	/*?-------------------|TARGETING | VARS|--------------------*/
 	TArray<TObjectPtr<AActor>> TargetActors;
 	bool bIsTargeting = false;
-	TObjectPtr<AActor> CurrentTargetActor;
+	TWeakObjectPtr<AActor> CurrentTargetActor;
 	FTimerHandle LerpToTargetActorTimer;
 	int32 TargetIndex = 0;
 	/*?-------------------|TARGETING | VARS|--------------------*/
