@@ -32,6 +32,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	UWidgetComponent* InteractionWidget;
 	
+	bool bHovered = false;
+	
 public:
 	virtual void Interact(AActor* Interactor) override;
 	virtual void StopInteract() override;

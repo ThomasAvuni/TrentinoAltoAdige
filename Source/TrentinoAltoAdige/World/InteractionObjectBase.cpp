@@ -5,6 +5,7 @@
 
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "TrentinoAltoAdige/UI/TargetWidget.h"
 
 // Sets default values
 AInteractionObjectBase::AInteractionObjectBase()
@@ -45,14 +46,30 @@ void AInteractionObjectBase::StopInteract()
 
 void AInteractionObjectBase::ShowInteractionWidget()
 {
+	if (bHovered) return;
+	
+	bHovered = true;
 	if (InteractionWidget)
+	{
 		InteractionWidget->SetVisibility(true);
+		if (UTargetWidget* Widget = Cast<UTargetWidget>(InteractionWidget->GetWidget()))
+		{
+			Widget->PlayPopupAnimation();
+		}
+	}
 }
 
 void AInteractionObjectBase::HideInteractionWidget()
 {
+	bHovered = false;
+	
 	if (InteractionWidget)
-		InteractionWidget->SetVisibility(false);
+	{
+		if (UTargetWidget* Widget = Cast<UTargetWidget>(InteractionWidget->GetWidget()))
+		{
+			Widget->StopPopupAnimation();
+		}
+	}
 }
 
 EInteractionType AInteractionObjectBase::GetInteractionType()
