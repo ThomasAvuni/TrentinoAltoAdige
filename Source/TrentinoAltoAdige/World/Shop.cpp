@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TrentinoAltoAdige/Characters/Player/PlayerCharacter.h"
+#include "TrentinoAltoAdige/UI/MainHUD.h"
 #include "TrentinoAltoAdige/UI/PlayerHUD.h"
 #include "TrentinoAltoAdige/UI/WeaponUpgradeWidget.h"
 
@@ -49,12 +50,9 @@ void AShop::Interact(AActor* Interactor)
 
 		if (APlayerHUD* HUD = Cast<APlayerHUD>(Controller->GetHUD()))
 		{
-			if (UWeaponUpgradeWidget* Widget = HUD->GetWeaponUpgradeWidget())
+			if (UMainHUD* MainHUD = HUD->GetMainHUD())
 			{
-				FInputModeUIOnly Mode;
-				Controller->SetInputMode(Mode);
-				Controller->bShowMouseCursor = true;
-				Widget->AddToViewport();
+				MainHUD->PushMenu(HUD->GetWeaponUpgradeWidgetClass());
 			}
 		}
 	}
@@ -78,9 +76,13 @@ void AShop::StopInteract()
 		if (APlayerHUD* HUD = Cast<APlayerHUD>(Controller->GetHUD()))
 		{
 			Controller->bShowMouseCursor = false;
-			if (UWeaponUpgradeWidget* Widget = HUD->GetWeaponUpgradeWidget())
+			
+			if (UMainHUD* MainHUD = HUD->GetMainHUD())
 			{
-				Widget->RemoveFromParent();
+				if (UCommonActivatableWidget* ActiveWidget = MainHUD->GetMenuStack()->GetActiveWidget())
+				{
+					ActiveWidget->DeactivateWidget();
+				}
 			}
 		}
 	}

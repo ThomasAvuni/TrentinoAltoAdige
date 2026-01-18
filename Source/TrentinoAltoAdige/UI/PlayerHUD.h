@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "PlayerHUD.generated.h"
 
+class UMainHUD;
 class APlayerCharacter;
 class UWeaponUpgradeWidget;
 /**
@@ -17,14 +18,19 @@ class TRENTINOALTOADIGE_API APlayerHUD : public AHUD
 	GENERATED_BODY()
 	
 public:
-	void ShowUpgradeWeaponWidget();
-	void HideUpgradeWeaponWidget();
 	TObjectPtr<UWeaponUpgradeWidget> GetWeaponUpgradeWidget() const { return WeaponUpgradeWidget; }
+	TSubclassOf<UWeaponUpgradeWidget> GetWeaponUpgradeWidgetClass() const { return WeaponUpgradeWidgetClass; }
+	TObjectPtr<UMainHUD> GetMainHUD() const { return MainHUD; }
 protected:
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UWeaponUpgradeWidget> WeaponUpgradeWidgetClass;
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UMainHUD> MainHUDClass;
+	UPROPERTY()
 	TObjectPtr<UWeaponUpgradeWidget> WeaponUpgradeWidget;
+	UPROPERTY()
+	TObjectPtr<UMainHUD> MainHUD;
 
 private:
 	TObjectPtr<APlayerCharacter> PlayerRef;

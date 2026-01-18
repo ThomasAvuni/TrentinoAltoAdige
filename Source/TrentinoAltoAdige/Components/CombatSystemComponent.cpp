@@ -5,7 +5,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Characters/Animation/CharacterAnimInstance.h"
@@ -92,9 +91,21 @@ void UCombatSystemComponent::PerformTrace()
 	{
 		FVector TraceStart = Weapon->GetMesh()->GetSocketLocation(FName("SwordBase"));
 		FVector TraceEnd = Weapon->GetMesh()->GetSocketLocation(FName("SwordTip"));
-		float fRadius = 20.f; // raggio della sfera usata per lo sweep
+		float fRadius = OwnerRef->GetTeam() == Player ? 20.f : 40.f; // raggio della sfera usata per lo sweep
 		FHitResult HitResult;
+#if  0
+		bool bDebugPersistent = false; // false = sparisce dopo 'fDebugLifeTime'
+		float fDebugLifeTime = 2.0f;   // Il disegno rimane per 2 secondi
 
+		// Disegna la sfera alla posizione di INIZIO (Blu)
+		DrawDebugSphere(GetWorld(), TraceStart, fRadius, 12, FColor::Blue, bDebugPersistent, fDebugLifeTime);
+
+		// Disegna la sfera alla posizione di FINE (Blu)
+		DrawDebugSphere(GetWorld(), TraceEnd, fRadius, 12, FColor::Blue, bDebugPersistent, fDebugLifeTime);
+
+		// Disegna la linea che collega Start ed End
+		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, bDebugPersistent, fDebugLifeTime);
+#endif
 		//Solo oggetti di tipo Pawn (es. nemici)
 		FCollisionObjectQueryParams CollisionObjectQueryParams;
 		CollisionObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
@@ -114,36 +125,54 @@ void UCombatSystemComponent::PerformTrace()
 				// Uso l'interfaccia di combattimento per applicare reazioni/danni
 				if (ICombatInterface* Enemy = Cast<ICombatInterface>(HitActor))
 				{
+					if (Enemy->GetTeam() == OwnerRef->GetTeam()) return;
+					
 					// Registro l'attore colpito per evitare clash multipli
 					EnemiesHitThisAttack.Add(HitActor);
 					// Se è il player, applico camera shake
 					if (PlayerOwnerRef)
 						PlayerOwnerRef->CameraShake();
 					// Spawn VFX se presente
-					if (HitVFX)
+					if (UNiagaraSystem* HitVFX = Enemy->IsParrying() ? HitBlockVFX : HitBloodVFX)
 						UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, HitResult.Location);
 					// HitSound se presente
-					if (USoundBase* HitSound = Weapon->GetWeaponHitSound())
+					if (USoundBase* HitSound = Enemy->IsParrying() ? Weapon->GetWeaponBlockSound() : Weapon->GetWeaponHitSound())
 						UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitResult.ImpactPoint);
-					
+
 					// Calcolo direzione del colpo rispetto alla forward vector del bersaglio
 					FVector HitActorForwardVector = HitActor->GetActorForwardVector();
 					FVector HitDirection = HitActor->GetActorLocation() - GetOwner()->GetActorLocation();
 					HitDirection.Normalize();
 					float DotProduct = FVector::DotProduct(HitActorForwardVector, HitDirection);
-
 					if (DotProduct > 0.6f)
 					{
 					}
 					else if (DotProduct < -0.6f)
 					{
-						Enemy->GetCharacterMesh()->GetAnimInstance()->Montage_Play(HitReactionMontage);
+						Enemy->GetCharacterMesh()->GetAnimInstance()->Montage_Play(HitReactionFwdMontage);
+					}
+
+					float Damage;
+					if (Enemy->IsParrying())
+					{
+						float Time = GetWorld()->GetTimeSeconds();
+						float DeltaTime = Time - Enemy->GetCombatSystemComponent()->GetParryStartTime();
+						if (DeltaTime <= PerfectParryWindow)
+						{
+							Damage = 0.f;
+							Enemy->HandlePerfectParry();
+						}
+						else
+						{
+							Enemy->HandleParry();
+						}
+
+						Damage = CalculateDamage(Weapon->GetWeaponBaseDamage()) * 0.5f;
 					}
 					else
 					{
+						Damage = CalculateDamage(Weapon->GetWeaponBaseDamage());
 					}
-					
-					float Damage = CalculateDamage(Weapon->GetWeaponBaseDamage());
 
 					DBG_LINE("{}", Damage);
 					
@@ -155,6 +184,11 @@ void UCombatSystemComponent::PerformTrace()
 			}
 		}
 	}
+}
+
+void UCombatSystemComponent::ResetEnemiesHitThisAttack()
+{
+	EnemiesHitThisAttack.Empty();
 }
 
 void UCombatSystemComponent::SaveCombo()
@@ -176,6 +210,7 @@ void UCombatSystemComponent::ResetCombo()
 	bSaveCombo = false;
 	bIsAttacking = false;
 	CurrentHitActor = nullptr;
+	ResetEnemiesHitThisAttack();
 	AttackIndex = 0;
 
 	AnimInstance->Montage_Stop(0.f, CurrentAttackMontage);
@@ -209,274 +244,353 @@ void UCombatSystemComponent::ApplyHitStop(AActor* Actor, float Duration, float T
 #pragma endregion
 
 #pragma region Target
+
+// Gestisce l'attivazione e disattivazione del sistema di puntamento (Lock-on)
 void UCombatSystemComponent::Target()
 {
-	if (!bIsTargeting)
-	{
-		StartTarget();
-		return;
-	}
-	
-	StopTarget();
+    // Se non stiamo mirando, inizia a cercare un bersaglio
+    if (!bIsTargeting)
+    {
+       StartTarget();
+       return;
+    }
+    
+    // Se stavamo già mirando, interrompi il puntamento
+    StopTarget();
 }
 
 void UCombatSystemComponent::StartTarget()
 {
-	bIsTargeting = true;
-	FVector Start = GetOwner()->GetActorLocation() + FVector(-100.f, 0, 20.f);
-	FVector End = PlayerOwnerRef ? Start + (PlayerOwnerRef->GetCamera()->GetForwardVector() * 1200.f)
-								 : Start + (GetOwner()->GetActorForwardVector() * 1200.f);  
-	float CapsuleRadius = 650.f;
-	FVector Dir = End - Start;
-	float Distance = Dir.Size();
-	TArray<FHitResult> HitResults;
-	FCollisionObjectQueryParams QueryParams;
-	QueryParams.AddObjectTypesToQuery(ECC_Pawn);
-	FCollisionQueryParams CollisionQueryParams;
-	CollisionQueryParams.AddIgnoredActor(GetOwner());
-	if (GetWorld()->SweepMultiByObjectType(HitResults, Start, End, FQuat::Identity, QueryParams,
-		FCollisionShape::MakeCapsule(CapsuleRadius, FMath::Max(10.f, Distance * 0.5f)), CollisionQueryParams))
-	{
-		float ClosestDist = BIG_NUMBER;
-		AActor* ClosestActor = nullptr;
-		float ClosestInCone = BIG_NUMBER;
-		AActor* BestInCone = nullptr;
-		for (FHitResult& HitResult : HitResults)
-		{
-			AActor* Actor = HitResult.GetActor();
-			if (!TargetActors.Contains(Actor))
-			{
-				TargetActors.AddUnique(Actor);
-			
-				FVector Direction = Actor->GetActorLocation() - GetOwner()->GetActorLocation();
-				Direction.Normalize();
-				FVector FacingVector = PlayerOwnerRef ? PlayerOwnerRef->GetCamera()->GetForwardVector() : GetOwner()->GetActorForwardVector();
-				float DotProduct = FVector::DotProduct(Direction, FacingVector);
-				float Angle = FMath::Cos(FMath::DegreesToRadians(35.f));
-				float Dist = FVector::Dist(GetOwner()->GetActorLocation(), Actor->GetActorLocation());
-				if (DotProduct < Angle)
-				{
-					if (Dist < ClosestDist)
-					{
-						ClosestDist = Dist;
-						ClosestActor = Actor;
-					}
-					continue;
-				}
+    bIsTargeting = true;
+    
+    // Calcola il punto di inizio per il rilevamento (leggermente spostato rispetto all'attore)
+    FVector Start = GetOwner()->GetActorLocation() + FVector(-100.f, 0, 20.f);
+    
+    // Calcola il punto finale del raggio (End) basandosi sulla telecamera (se controllato dal player) o sulla direzione dell'attore
+    FVector End = PlayerOwnerRef ? Start + (PlayerOwnerRef->GetCamera()->GetForwardVector() * 1200.f)
+                          : Start + (GetOwner()->GetActorForwardVector() * 1200.f);  
+    
+    float CapsuleRadius = 650.f; // Raggio della sfera/capsula di ricerca
+    FVector Dir = End - Start;
+    float Distance = Dir.Size();
+    
+    TArray<FHitResult> HitResults;
+    
+    // Configura la query per cercare solo Pawn (personaggi/nemici)
+    FCollisionObjectQueryParams QueryParams;
+    QueryParams.AddObjectTypesToQuery(ECC_Pawn);
+    
+    // Ignora se stesso durante la ricerca
+    FCollisionQueryParams CollisionQueryParams;
+    CollisionQueryParams.AddIgnoredActor(GetOwner());
 
-				if (Dist < ClosestInCone)
-				{
-					ClosestInCone = Dist;
-					BestInCone = Actor;
-				}
-			}
-		}
-		CurrentTargetActor = BestInCone ? BestInCone : ClosestActor;
-	}
+    // Esegue uno "Sweep" (lancio di una forma geometrica) per trovare nemici nell'area
+    if (GetWorld()->SweepMultiByObjectType(HitResults, Start, End, FQuat::Identity, QueryParams,
+       FCollisionShape::MakeCapsule(CapsuleRadius, FMath::Max(10.f, Distance * 0.5f)), CollisionQueryParams))
+    {
+       // Variabili per tracciare il miglior bersaglio
+       float ClosestDist = BIG_NUMBER;
+       AActor* ClosestActor = nullptr;      // Migliore per distanza assoluta
+       float ClosestInCone = BIG_NUMBER;
+       AActor* BestInCone = nullptr;        // Migliore che si trova "davanti" al giocatore (nel cono visivo)
 
-	if (CurrentTargetActor.IsValid())
-	{
-		if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
-			Enemy->ShowTargetWidget();
-		ACharacter* Char = GetOwner<ACharacter>();
-		Char->GetController()->SetIgnoreLookInput(true);
-		GetWorld()->GetTimerManager().SetTimer(LerpToTargetActorTimer, [this, Char]
-		{
-			if (Char)
-			{
-				FVector TargetLocation = CurrentTargetActor->GetActorLocation();
-				if (!bIsAttacking)
-					TargetLocation.Z -= 20.f;
-				FRotator LookAt = UKismetMathLibrary::FindLookAtRotation(GetOwner()->GetActorLocation(), TargetLocation);
-				FRotator InterpRot = FMath::RInterpTo(Char->GetControlRotation(), LookAt, GetWorld()->GetDeltaSeconds(), 10.f);
-				Char->GetController()->SetControlRotation(InterpRot);
-			}
-		}, 0.01f, true);
-	}
+       for (FHitResult& HitResult : HitResults)
+       {
+          AActor* Actor = HitResult.GetActor();
+          // Evita di aggiungere duplicati
+          if (!TargetActors.Contains(Actor))
+          {
+             TargetActors.AddUnique(Actor);
+          
+             // Logica Matematica per capire se il nemico è davanti a noi
+             FVector Direction = Actor->GetActorLocation() - GetOwner()->GetActorLocation();
+             Direction.Normalize();
+             FVector FacingVector = PlayerOwnerRef ? PlayerOwnerRef->GetCamera()->GetForwardVector() : GetOwner()->GetActorForwardVector();
+             
+             // DotProduct: 1.0 = esattamente davanti, 0.0 = di lato, -1.0 = dietro
+             float DotProduct = FVector::DotProduct(Direction, FacingVector);
+             
+             // Soglia dell'angolo (circa 35 gradi per lato)
+             float Angle = FMath::Cos(FMath::DegreesToRadians(35.f));
+             float Dist = FVector::Dist(GetOwner()->GetActorLocation(), Actor->GetActorLocation());
+             
+             // Se il nemico è FUORI dal cono visivo (o dietro), consideralo solo per la distanza
+             if (DotProduct < Angle)
+             {
+                if (Dist < ClosestDist)
+                {
+                   ClosestDist = Dist;
+                   ClosestActor = Actor;
+                }
+                continue;
+             }
+
+             // Se il nemico è DENTRO il cono visivo, ha priorità
+             if (Dist < ClosestInCone)
+             {
+                ClosestInCone = Dist;
+                BestInCone = Actor;
+             }
+          }
+       }
+       // Preferisce chi è nel cono visivo; se nessuno è davanti, prende il più vicino in assoluto
+       CurrentTargetActor = BestInCone ? BestInCone : ClosestActor;
+    }
+
+    // Se abbiamo trovato un bersaglio valido
+    if (CurrentTargetActor.IsValid())
+    {
+       ACharacter* Char = GetOwner<ACharacter>();
+       
+       // Controllo distanza massima di sicurezza (15 metri)
+       float Dist = FVector::Dist(Char->GetActorLocation(), CurrentTargetActor->GetActorLocation());
+       if (Dist > 1500.f)
+       {
+          CurrentTargetActor = nullptr;
+          return;
+       }
+       
+       // Mostra l'icona di lock-on sul nemico (se implementa l'interfaccia)
+       if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
+          Enemy->ShowTargetWidget();
+          
+       // Disabilita l'input del mouse per la telecamera (Hard Lock)
+       Char->GetController()->SetIgnoreLookInput(true);
+       
+       // Avvia un Timer Loop (ogni 0.01s) per ruotare la telecamera/personaggio verso il nemico
+       GetWorld()->GetTimerManager().SetTimer(LerpToTargetActorTimer, [this, Char]
+       {
+          if (Char && CurrentTargetActor.IsValid()) // Aggiunto check validità CurrentTargetActor
+          {
+             float Dist = FVector::Dist(Char->GetActorLocation(), CurrentTargetActor->GetActorLocation());
+             // Se il nemico si allontana troppo, sgancia il target
+             if (Dist > 1500.f)
+             {
+                StopTarget();
+                return;
+             }
+             
+             FVector TargetLocation = CurrentTargetActor->GetActorLocation();
+             // Aggiusta l'altezza del target point (mira al torso/piedi)
+             if (!bIsAttacking)
+             {
+                TargetLocation.Z -= 20.f;
+             }
+             
+             // Calcola la rotazione necessaria per guardare il nemico
+             FRotator LookAt = UKismetMathLibrary::FindLookAtRotation(GetOwner()->GetActorLocation(), TargetLocation);
+             
+             // Interpola fluidamente la rotazione corrente verso quella desiderata
+             FRotator InterpRot = FMath::RInterpTo(Char->GetControlRotation(), LookAt, GetWorld()->GetDeltaSeconds(), 10.f);
+             Char->GetController()->SetControlRotation(InterpRot);
+          }
+       }, 0.01f, true);
+    }
 }
 
+// Passa al prossimo bersaglio disponibile nella lista trovata
 void UCombatSystemComponent::NextTarget()
 {
-	if (TargetActors.IsEmpty())
-	{
-		bIsTargeting = false;
-		CurrentTargetActor = nullptr;
-		return;
-	}
-	
-	if (ICombatInterface* OldTargetActor = Cast<ICombatInterface>(CurrentTargetActor))
-	{
-		OldTargetActor->HideTargetWidget();
-	}
-	
-	int32 NewIndex = ++TargetIndex % TargetActors.Num();
-	if (AActor* CandidateActor = TargetActors[NewIndex])
-	{
-		CurrentTargetActor = CandidateActor;
-		if (ICombatInterface* NewTargetActor = Cast<ICombatInterface>(CurrentTargetActor))
-		{
-			NewTargetActor->ShowTargetWidget();
-		}
-	}
-	else
-		CurrentTargetActor = nullptr;
+    if (TargetActors.IsEmpty())
+    {
+       bIsTargeting = false;
+       CurrentTargetActor = nullptr;
+       return;
+    }
+    
+    // Nasconde il widget sul vecchio bersaglio
+    if (ICombatInterface* OldTargetActor = Cast<ICombatInterface>(CurrentTargetActor))
+    {
+       OldTargetActor->HideTargetWidget();
+    }
+    
+    // Incrementa l'indice ciclicamente (modulo %)
+    int32 NewIndex = ++TargetIndex % TargetActors.Num();
+    if (AActor* CandidateActor = TargetActors[NewIndex])
+    {
+       CurrentTargetActor = CandidateActor;
+       // Mostra il widget sul nuovo bersaglio
+       if (ICombatInterface* NewTargetActor = Cast<ICombatInterface>(CurrentTargetActor))
+       {
+          NewTargetActor->ShowTargetWidget();
+       }
+    }
+    else
+       CurrentTargetActor = nullptr;
 }
 
+// Resetta tutto il sistema di targeting
 void UCombatSystemComponent::StopTarget()
 {
-	if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
-		Enemy->HideTargetWidget();
-	bIsTargeting = false;
-	TargetActors.Empty();
-	CurrentTargetActor = nullptr;
-	GetWorld()->GetTimerManager().ClearTimer(LerpToTargetActorTimer);
-	ACharacter* Char = GetOwner<ACharacter>();
-	Char->GetController()->SetIgnoreLookInput(false);
+    if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
+       Enemy->HideTargetWidget();
+       
+    bIsTargeting = false;
+    TargetActors.Empty();
+    CurrentTargetActor = nullptr;
+    
+    // IMPORTANTE: Ferma il timer di rotazione
+    GetWorld()->GetTimerManager().ClearTimer(LerpToTargetActorTimer);
+    
+    // Restituisce il controllo della telecamera al giocatore
+    ACharacter* Char = GetOwner<ACharacter>();
+    if(Char && Char->GetController()) // Check di sicurezza
+        Char->GetController()->SetIgnoreLookInput(false);
 }
 #pragma endregion
 
 #pragma region Equipping
+// Gestisce l'animazione e la logica per sfoderare l'arma
 void UCombatSystemComponent::EquipWeapon(FName InSocket, UAnimMontage* EquipMontage)
 {
-	// Verifica che sia l'istanza di animazione che l'asset del montage siano validi
-	if (AnimInstance && EquipMontage)
-	{
-		// Attiva il flag di occupazione per impedire altre azioni durante l'animazione
-		bIsEquippingWeapon = true;
-		// Avvia la riproduzione dell'animazione di equipaggiamento dalla schiena
-		AnimInstance->Montage_Play(EquipMontage);
-		// Dichiarazione del delegate per intercettare la fine del montage
-		FOnMontageEnded OnMontageEnded;
-		// Definizione della logica da eseguire al termine dell'animazione tramite Lambda
-		// Viene catturato 'this' per poter accedere alle variabili della classe
-		OnMontageEnded.BindLambda([this, InSocket](UAnimMontage* Montage, bool bInterrupted)
-		{
-			if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
-			{
-				Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, InSocket);
-				// L'animazione è terminata o interrotta: sblocca lo stato del personaggio
-				bIsEquippingWeapon = false;
-				// Aggiorna lo stato logico: l'arma è ora considerata equipaggiata
-				bIsWeaponEquipped = true;
-			}
-		});
-		// Associa formalmente il delegate al montage specifico appena avviato
-		AnimInstance->Montage_SetEndDelegate(OnMontageEnded, EquipMontage);
-	}
+    if (AnimInstance && EquipMontage)
+    {
+       bIsEquippingWeapon = true;
+       AnimInstance->Montage_Play(EquipMontage);
+       
+       FOnMontageEnded OnMontageEnded;
+       // Lambda eseguita quando l'animazione finisce
+       OnMontageEnded.BindLambda([this, InSocket](UAnimMontage* Montage, bool bInterrupted)
+       {
+          // Solo alla FINE dell'animazione (presumibilmente quando la mano ha afferrato l'arma)
+          // spostiamo l'arma nello slot della mano (InSocket)
+          if (OwnerRef && OwnerRef->GetWeapon()) // Check sicurezza OwnerRef
+          {
+             AWeaponBase* Weapon = OwnerRef->GetWeapon();
+             Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, InSocket);
+             bIsEquippingWeapon = false;
+             bIsWeaponEquipped = true;
+          }
+       });
+       AnimInstance->Montage_SetEndDelegate(OnMontageEnded, EquipMontage);
+    }
 }
 
+// Gestisce l'animazione e la logica per rinfoderare l'arma
 void UCombatSystemComponent::UnEquipWeapon(FName InSocket, UAnimMontage* UnEquipMontage)
 {
-	if (bIsAttacking) return;
-	
-	if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
-	{
-		//Verifica che l'asset del Montage (l'animazione) sia valido prima di procedere
-		if (AnimInstance && UnEquipMontage)
-		{
-			Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, InSocket);
-			//Avvia la riproduzione del Montage sull'istanza di animazione corrente
-			AnimInstance->Montage_Play(UnEquipMontage);
-			//Imposta un flag di stato per bloccare altre azioni (es. Sparare) durante l'animazione
-			bIsEquippingWeapon = true;
-			bIsWeaponEquipped = false;
-			//Dichiarazione di un "Delegate" per gestire l'evento di fine animazione
-			FOnMontageEnded OnMontageEnded;
-			//Lega una funzione Lambda al delegate. 
-			// Questa funzione verrà eseguita AUTOMATICAMENTE quando il montage finisce o viene interrotto.
-			OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
-			{
-				//Resetta il flag: l'azione è terminata, il personaggio può fare altro
-				bIsEquippingWeapon = false;
-				//Notifica ad altri sistemi (es. UI o Inventory) che l'arma è stata riposta
-				OnWeaponUnEquipped.Broadcast();
-			});
-			//Registra il delegate appena creato specificamente per questo Montage
-			AnimInstance->Montage_SetEndDelegate(OnMontageEnded, UnEquipMontage);
-		}
-	}
+    if (bIsAttacking) return; // Non rinfoderare se stai attaccando
+    
+    if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+    {
+       if (AnimInstance && UnEquipMontage)
+       {
+          // NOTA: Qui l'arma viene attaccata al fodero (InSocket) IMMEDIATAMENTE,
+          // prima ancora che l'animazione inizi. Visivamente potrebbe sembrare un "teletrasporto"
+          // se l'animazione non prevede che la mano sia già sul fodero.
+          Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, InSocket);
+          
+          AnimInstance->Montage_Play(UnEquipMontage);
+          bIsEquippingWeapon = true;
+          bIsWeaponEquipped = false;
+          
+          FOnMontageEnded OnMontageEnded;
+          OnMontageEnded.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
+          {
+             bIsEquippingWeapon = false;
+             OnWeaponUnEquipped.Broadcast(); // Notifica UI/Inventario
+          });
+          AnimInstance->Montage_SetEndDelegate(OnMontageEnded, UnEquipMontage);
+       }
+    }
 }
 #pragma endregion
 
 #pragma region Parry
 void UCombatSystemComponent::StartParry()
 {
-	if (bIsParrying || !bIsWeaponEquipped) return;
+    // Blocca parry multipli o se l'arma non è in mano
+    if (bIsParrying || !bIsWeaponEquipped) return;
+
+	ParryStartTime = GetWorld()->GetTimeSeconds();
 	
-	bIsParrying = true;
-	if (OwnerRef)
-	{
-		OwnerRef->SetMovementToWalk();
-		if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
-		{
-			Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetIdleSocket());
-		}
-	}
+    bIsParrying = true;
+    if (OwnerRef)
+    {
+       // Rallenta il personaggio mentre para
+       OwnerRef->SetMovementToWalk();
+       // NOTA: Sembra resettare l'arma all'IdleSocket durante il parry?
+       // Potrebbe essere intenzionale per specifiche animazioni.
+       if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+       {
+          Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetIdleSocket());
+       }
+    }
 }
 
 void UCombatSystemComponent::EndParry()
 {
-	if (!bIsParrying)
-		return;
-	bIsParrying = false;
-	if (OwnerRef)
-	{
-		OwnerRef->ResetMovement();
-		if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
-		{
-			Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetIdleSocket());
-		}
-	}
+    if (!bIsParrying)
+       return;
+    bIsParrying = false;
+    if (OwnerRef)
+    {
+       OwnerRef->ResetMovement(); // Ripristina velocità normale
+       if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+       {
+           // Anche qui riattacca all'IdleSocket. Assicurarsi che sia il socket corretto.
+          Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetIdleSocket());
+       }
+    }
 }
 #pragma endregion
 
 #pragma region WeaponLeveling
-void UCombatSystemComponent::UpgradeWeapon(/*!SOSTITUIRE CON INVENTORYCOMPONENT*/int32 NumberOfShards)
+// Tenta di aumentare il livello dell'arma 
+void UCombatSystemComponent::UpgradeWeapon(/*!SOSTITUIRE CON INVENTORYCOMPONENT*/ int32 NumberOfShards)
 {
-	int32 CostNeededForUpgrade = GetUpgradeCostForLevel(CurrentWeaponLevel);
-	if (CurrentWeaponLevel < MaxWeaponLevel)
-	{
-		if (NumberOfShards >= CostNeededForUpgrade)
-		{
-			CurrentWeaponLevel++;
-			//Chiamata all'inventorycomponent e diminuire il numero di shards
-			UpdateWeaponMesh(CurrentWeaponLevel);
-			OnWeaponUpgraded.Broadcast(CurrentWeaponLevel);
-		}
-		else
-		{
-			int32 Diff = CostNeededForUpgrade - NumberOfShards;
-			FString Messaggio = FString::Printf(TEXT("Impossibile migliorare l'arma, sono richieste %d shards, ma tu ne hai solo %d, te ne mancano %d"), CostNeededForUpgrade, NumberOfShards, Diff);
-			OnWeaponFailedUpgrade.Broadcast(Messaggio);
-		}
-	}
-	else
-	{
-		FString Messaggio = FString::Printf(TEXT("Impossibile migliorare l'arma, è già al livello massimo (%d)"), MaxWeaponLevel);
-		OnWeaponFailedUpgrade.Broadcast(Messaggio);
-	}
+    int32 CostNeededForUpgrade = GetUpgradeCostForLevel(CurrentWeaponLevel);
+    
+    // Controlla se abbiamo raggiunto il level cap
+    if (CurrentWeaponLevel < MaxWeaponLevel)
+    {
+       if (NumberOfShards >= CostNeededForUpgrade)
+       {
+          CurrentWeaponLevel++;
+          // Qui dovresti inserire la logica per rimuovere le shard dall'inventario
+          UpdateWeaponMesh(CurrentWeaponLevel);
+          OnWeaponUpgraded.Broadcast(CurrentWeaponLevel);
+       }
+       else
+       {
+          // Gestione errore: risorse insufficienti
+          int32 Diff = CostNeededForUpgrade - NumberOfShards;
+          FString Messaggio = FString::Printf(TEXT("Risorse insufficienti: servono %d shards, ne hai %d. Mancanti: %d"), CostNeededForUpgrade, NumberOfShards, Diff);
+          OnWeaponFailedUpgrade.Broadcast(Messaggio);
+       }
+    }
+    else
+    {
+       // Gestione errore: livello massimo
+       FString Messaggio = FString::Printf(TEXT("Arma già al livello massimo (%d)"), MaxWeaponLevel);
+       OnWeaponFailedUpgrade.Broadcast(Messaggio);
+    }
 }
 
+// Cambia la Mesh dell'arma in base al livello (es. Spada di ferro -> Spada d'oro)
 void UCombatSystemComponent::UpdateWeaponMesh(int32 WeaponLevel)
 {
-	if (!WeaponMeshes.IsEmpty())
-	{
-		if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
-		{
-			int32 NewMeshIndex = WeaponLevel - 1;
-			if (WeaponMeshes.IsValidIndex(NewMeshIndex))
-			{
-				if (USkeletalMesh* NewMesh = WeaponMeshes[NewMeshIndex])
-				{
-					Weapon->SetNewLevelMesh(NewMesh);
-				}
-			}
-		}
-	}
+    if (!WeaponMeshes.IsEmpty())
+    {
+       if (AWeaponBase* Weapon = OwnerRef->GetWeapon())
+       {
+          // L'array è base-0, i livelli partono da 1 solitamente
+          int32 NewMeshIndex = WeaponLevel - 1;
+          if (WeaponMeshes.IsValidIndex(NewMeshIndex))
+          {
+             if (USkeletalMesh* NewMesh = WeaponMeshes[NewMeshIndex])
+             {
+                Weapon->SetNewLevelMesh(NewMesh);
+             }
+          }
+       }
+    }
 }
 
+// Calcola il costo esponenziale per l'upgrade
+// Formula: CostoBase * (Moltiplicatore ^ (Livello - 1))
 int32 UCombatSystemComponent::GetUpgradeCostForLevel(int32 Level) const
 {
-	return FMath::RoundToInt(BaseCostForUpgrade * FMath::Pow(CostMultiplier, Level - 1));
+    return FMath::RoundToInt(BaseCostForUpgrade * FMath::Pow(CostMultiplier, Level - 1));
 }
 #pragma endregion

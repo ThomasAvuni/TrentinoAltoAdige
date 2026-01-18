@@ -3,18 +3,18 @@
 
 #include "EnemyBase.h"
 
-#include "Kismet/KismetMathLibrary.h"
-#include "TrentinoAltoAdige/DebugMacros.h"
+#include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
+#include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 
 
 AWeaponBase* AEnemyBase::GetWeapon() const
 {
-	return nullptr;
+	return CurrentWeapon;
 }
 
 bool AEnemyBase::IsWeaponEquipped() const
 {
-	return false;
+	return CombatSystemComponent->IsWeaponEquipped();
 }
 
 //! Spostare in CombatSystemComponent
@@ -26,11 +26,20 @@ void AEnemyBase::UnEquipWeapon()
 {
 }
 
+void AEnemyBase::HandlePerfectParry()
+{
+}
+
+void AEnemyBase::HandleParry()
+{
+}
+
 // Sets default values
 AEnemyBase::AEnemyBase()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	CombatSystemComponent = CreateDefaultSubobject<UCombatSystemComponent>("CombatSysComp");
 }
 
 // Called when the game starts or when spawned
@@ -38,4 +47,9 @@ void AEnemyBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	FActorSpawnParameters params;
+	params.Owner = this;
+	CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, params);
+	CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordBackSocket"));
+	CombatSystemComponent->EquipWeapon(CurrentWeapon->GetIdleSocket(), EquipFromBackWeapon);
 }

@@ -6,6 +6,15 @@
 #include "UObject/Interface.h"
 #include "CombatInterface.generated.h"
 
+class UCombatSystemComponent;
+
+UENUM()
+enum ETeam
+{
+	Player,
+	Enemy
+};
+
 // This class does not need to be modified.
 UINTERFACE(NotBlueprintable)
 class UCombatInterface : public UInterface
@@ -34,4 +43,10 @@ public:
 	virtual void HideTargetWidget(){}
 	virtual void SetMovementToWalk(){}
 	virtual void ResetMovement(){}
+	virtual bool IsParrying() = 0;
+	virtual bool IsPerfectParrying() = 0;
+	virtual void HandlePerfectParry() = 0;
+	virtual void HandleParry() = 0;
+	virtual UCombatSystemComponent* GetCombatSystemComponent() = 0;
+	virtual ETeam GetTeam() = 0;
 };

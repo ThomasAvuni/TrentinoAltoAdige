@@ -3,6 +3,7 @@
 
 #include "PlayerHUD.h"
 
+#include "MainHUD.h"
 #include "WeaponUpgradeWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
@@ -13,17 +14,16 @@ void APlayerHUD::BeginPlay()
 	Super::BeginPlay();
 
 	PlayerRef = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	
-	if (WeaponUpgradeWidgetClass)
+
+	if (MainHUDClass)
 	{
-		WeaponUpgradeWidget = CreateWidget<UWeaponUpgradeWidget>(GetWorld(), WeaponUpgradeWidgetClass);
-		if (WeaponUpgradeWidget)
+		MainHUD = CreateWidget<UMainHUD>(GetWorld(), MainHUDClass);
+		if (MainHUD)
 		{
-			// WeaponUpgradeWidget->AddToViewport();
-			// WeaponUpgradeWidget->SetVisibility(ESlateVisibility::Collapsed);
+			MainHUD->AddToViewport();
 		}
 	}
-
+	
 	if (PlayerRef)
 	{
 		PlayerRef->GetCombatSystemComponent()->OnWeaponUpgraded.AddDynamic(this, &APlayerHUD::HandleWeaponLevelUpdate);
@@ -33,32 +33,22 @@ void APlayerHUD::BeginPlay()
 
 void APlayerHUD::HandleWeaponLevelUpdate(int32 NewLevel)
 {
-	if (WeaponUpgradeWidget)
+	if (MainHUD && MainHUD->GetMenuStack())
 	{
-		WeaponUpgradeWidget->UpdateWeaponLevel(NewLevel);
+		if (UWeaponUpgradeWidget* Widget = Cast<UWeaponUpgradeWidget>(MainHUD->GetMenuStack()->GetActiveWidget()))
+		{
+			Widget->UpdateWeaponLevel(NewLevel);
+		}
 	}
 }
 
 void APlayerHUD::HandleWeaponFailedUpgrade(FString Message)
 {
-	if (WeaponUpgradeWidget)
+	if (MainHUD && MainHUD->GetMenuStack())
 	{
-		WeaponUpgradeWidget->UpdateWeaponFailedUpgradeMessage(Message);
-	}
-}
-
-void APlayerHUD::ShowUpgradeWeaponWidget()
-{
-	if (WeaponUpgradeWidget)
-	{
-		WeaponUpgradeWidget->SetVisibility(ESlateVisibility::Visible);
-	}
-}
-
-void APlayerHUD::HideUpgradeWeaponWidget()
-{
-	if (WeaponUpgradeWidget)
-	{
-		WeaponUpgradeWidget->SetVisibility(ESlateVisibility::Collapsed);
+		if (UWeaponUpgradeWidget* Widget = Cast<UWeaponUpgradeWidget>(MainHUD->GetMenuStack()->GetActiveWidget()))
+		{
+			Widget->UpdateWeaponFailedUpgradeMessage(Message);
+		}
 	}
 }

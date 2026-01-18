@@ -91,6 +91,7 @@ public:
 	bool bIsInShop = false;
 	
 	/*?-------------------|INTERFACES|--------------------*/
+	virtual UCombatSystemComponent* GetCombatSystemComponent() override {return CombatSystemComponent;}
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
 	virtual USkeletalMeshComponent* GetCharacterMesh() override {return GetMesh();}
@@ -100,6 +101,15 @@ public:
 	virtual void SnapToTarget() override {InternalSnapToTarget();}
 	virtual void SetMovementToWalk() override { InternalSetMovementToWalk(); }
 	virtual void ResetMovement() override  { InternalResetMovement(); }
+	virtual bool IsParrying() override{return CombatSystemComponent->IsParrying();}
+	virtual bool IsPerfectParrying() override {return CombatSystemComponent->IsPerfectParrying();}
+	virtual ETeam GetTeam() override {return Player;}
+	virtual void HandlePerfectParry() override {InternalHandlePerfectParry();}
+	virtual void HandleParry() override {InternalHandleParry();}
+	UFUNCTION(BlueprintNativeEvent)
+	void InternalHandlePerfectParry();
+	UFUNCTION(BlueprintNativeEvent)
+	void InternalHandleParry();
 	UFUNCTION(BlueprintImplementableEvent)
 	void InternalSnapToTarget();
 	void InternalNextTarget();
@@ -160,6 +170,12 @@ protected:
 	
 	/*?-------------------|ANIMATIONS|--------------------*/
 	TObjectPtr<UAnimInstance> AnimInstance;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
+	TObjectPtr<UAnimMontage> PerfectParryMontage;
+		
+	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
+	TObjectPtr<UAnimMontage> ParryMontage;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
 	TObjectPtr<UAnimMontage> EquipFromBackWeapon;

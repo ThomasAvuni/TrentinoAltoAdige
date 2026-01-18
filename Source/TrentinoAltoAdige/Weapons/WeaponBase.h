@@ -36,6 +36,7 @@ public:
 	const TArray<FAttack>& GetWeaponComboAttacks() const {return ComboAttacks;}
 
 	const TObjectPtr<USoundBase>& GetWeaponHitSound() const {return HitSound;}
+	const TObjectPtr<USoundBase>& GetWeaponBlockSound() const {return HitBlockSound;}
 
 	USkeletalMeshComponent* GetMesh() const {return WeaponMesh;}
 
@@ -65,6 +66,9 @@ protected:
 	//Sound
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")
 	TObjectPtr<USoundBase> HitSound;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	TObjectPtr<USoundBase> HitBlockSound;
 	
 	//Sockets
 	UPROPERTY(EditDefaultsOnly, Category = "Sockets")

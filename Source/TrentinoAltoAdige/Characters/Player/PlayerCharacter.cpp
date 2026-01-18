@@ -134,6 +134,18 @@ void APlayerCharacter::InternalTarget()
 		CombatSystemComponent->Target();
 }
 
+void APlayerCharacter::InternalHandlePerfectParry_Implementation()
+{
+	if (PerfectParryMontage)
+		AnimInstance->Montage_Play(PerfectParryMontage);
+}
+
+void APlayerCharacter::InternalHandleParry_Implementation()
+{
+	if (ParryMontage)
+		AnimInstance->Montage_Play(ParryMontage);
+}
+
 void APlayerCharacter::InternalNextTarget()
 {
 	if (CombatSystemComponent)
@@ -169,29 +181,8 @@ void APlayerCharacter::ResetPlayerMovement()
 
 void APlayerCharacter::Interact()
 {
-	//(X=25.683607,Y=29.999998,Z=37.950425)
-	/*
-	* {
-	"Tagged": [
-		[
-			"RelativeLocation",
-			"(X=93.657124,Y=109.178393,Z=32.362580)"
-		],
-		[
-			"RelativeRotation",
-			"(Pitch=-3.136040,Yaw=-8.103552,Roll=-1.380143)"
-		],
-		[
-			"RelativeScale3D",
-			"(X=1.000000,Y=1.000000,Z=1.000000)"
-		],
-		[
-			"Mobility",
-			"Movable"
-		]
-	]
-}
-	 */
+	if (CombatSystemComponent->IsAttacking()) return;
+	
 	if (ActiveInteractionSession) return;
 	
 	if (CurrentInteractable)
@@ -249,6 +240,8 @@ void APlayerCharacter::InternalStopInteract()
 
 void APlayerCharacter::CheckForInteraction()
 {
+	if (CombatSystemComponent->IsAttacking()) return;
+	
 	FVector Start = GetActorLocation() + FVector(0, 0, 88.f);
 	FVector End = Start + (GetCamera()->GetForwardVector() * 400.f);
 	FHitResult HitResult;

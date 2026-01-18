@@ -25,13 +25,16 @@ public:
 	bool IsAttacking() const {return bIsAttacking;}
 	void SaveCombo();
 	void ResetCombo();
+	UFUNCTION(BlueprintCallable)
 	void Attack();
 	void PerformTrace();
-	void ResetEnemiesHitThisAttack() {EnemiesHitThisAttack.Empty();}
+	void ResetEnemiesHitThisAttack();
 	void ApplyHitStop(AActor* Actor, float Duration, float TimeDilation) const;
 	UFUNCTION(BlueprintCallable)
 	bool IsParrying() const {return bIsParrying;}
+	bool IsPerfectParrying() const {return bIsPerectParrying;}
 	float CalculateDamage(float WeaponBaseDamage) const;
+	float GetParryStartTime() const {return ParryStartTime;}
 	/*?-------------------|ATTACKS | FUNCTIONS|--------------------*/
 	
 	/*?-------------------|TARGETING | FUNCTIONS|--------------------*/
@@ -52,6 +55,7 @@ public:
 	/*?-------------------|Weapon Equipping | FUNCTIONS|--------------------*/
 
 	/*?-------------------|Weapon Leveling | FUNCTIONS|--------------------*/
+	UFUNCTION(BlueprintCallable)
 	const int32& GetWeaponLevel() const {return CurrentWeaponLevel;} 
 	UFUNCTION(BlueprintCallable)
 	void UpgradeWeapon(/*!SOSTITUIRE CON INVENTORYCOMPONENT*/int32 NumberOfShards);
@@ -88,7 +92,12 @@ private:
 	int32 AttackIndex = 0;		//? Index of the current attack in the array
 	bool bIsAttacking = false;	//? Flag if the character is attacking or not
 	bool bSaveCombo = false;	//? Flag to save the combo in the Montages
+	float ParryStartTime = 0.f;
+	UPROPERTY(EditAnywhere, Category = "Parry")
+	float PerfectParryWindow = 0.25f;
 	bool bIsParrying = false;
+	bool bCanPerfectParry = false;
+	bool bIsPerectParrying = false;
 	TSet<TObjectPtr<AActor>> EnemiesHitThisAttack;	//? Set of Actor Pointers hit this attack, so we don't hit the same Actor multiple times
 	UAnimMontage* CurrentAttackMontage;
 	/*?-------------------|ATTACK | VARS|--------------------*/
@@ -130,20 +139,25 @@ public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponFailedUpgrade, FString, ErrorMessage);
 	UPROPERTY(BlueprintAssignable)
 	FOnWeaponFailedUpgrade OnWeaponFailedUpgrade;
-private:
 	/*?-------------------|Weapon Leveling | VARS|--------------------*/
+private:
 
 	//TEMP
 	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* HitReactionMontage;
+	UAnimMontage* HitReactionFwdMontage;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* HitBlockMontage;
 
 	/*?-------------------|Anims|--------------------*/
 	TObjectPtr<class UCharacterAnimInstance> AnimInstance;
 	/*?-------------------|Anims|--------------------*/
 	
 	/*?-------------------|VFX|--------------------*/
-	UPROPERTY(EditDefaultsOnly, Category = "Sound")
-	TObjectPtr<class UNiagaraSystem> HitVFX;
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	TObjectPtr<class UNiagaraSystem> HitBloodVFX;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	TObjectPtr<class UNiagaraSystem> HitBlockVFX;
 	/*?-------------------|VFX|--------------------*/
 	
 	/*?-------------------|SOUND|--------------------*/
