@@ -13,6 +13,7 @@
 
 #include "PlayerCharacter.generated.h"
 
+class UDamageComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
@@ -68,12 +69,17 @@ protected:
 	/*?-------------------|COMPONENTS|--------------------*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
 	UCombatSystemComponent* CombatSystemComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
+	UDamageComponent* DamageComponent;
+	
+	
 public:	
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void PauseGame();
-	
+
 	/*?-------------------|BLUEPRINT HOOKS|--------------------*/
 	UFUNCTION(BlueprintImplementableEvent)
 	void CameraShake();
@@ -91,6 +97,7 @@ public:
 	bool bIsInShop = false;
 	
 	/*?-------------------|INTERFACES|--------------------*/
+	virtual UDamageComponent* GetDamageComponent() const override {return DamageComponent;}
 	virtual UCombatSystemComponent* GetCombatSystemComponent() override {return CombatSystemComponent;}
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual AWeaponBase* GetWeapon() const override {return CurrentWeapon;}

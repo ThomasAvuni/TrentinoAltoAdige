@@ -17,6 +17,7 @@ class TRENTINOALTOADIGE_API AEnemyBase : public ACharacter, public ICombatInterf
 	GENERATED_BODY()
 
 public:
+	virtual UDamageComponent* GetDamageComponent() const override {return DamageComponent;}
 	virtual AWeaponBase* GetWeapon() const override;
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual bool IsParrying() override{return CombatSystemComponent->IsParrying();}
@@ -58,6 +59,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
 	UCombatSystemComponent* CombatSystemComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
+	UDamageComponent* DamageComponent;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<class AWeaponBase> CurrentWeapon;
 	
@@ -66,5 +70,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
 	TObjectPtr<UAnimMontage> EquipFromBackWeapon;
+
+	UFUNCTION()
+	void OnDeath();
+	
 	
 };

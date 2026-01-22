@@ -6,6 +6,7 @@
 #include "UObject/Interface.h"
 #include "GetComponentInterface.generated.h"
 
+class UDamageComponent;
 class UCombatSystemComponent;
 // This class does not need to be modified.
 UINTERFACE(NotBlueprintable)
@@ -26,4 +27,7 @@ public:
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const = 0; 
 	virtual void SnapToTarget() = 0;
 	virtual void SetCanMove(bool val) = 0;
+
+	UFUNCTION(BlueprintCallable)
+	virtual UDamageComponent* GetDamageComponent() const = 0; 
 };

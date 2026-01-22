@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
+#include "TrentinoAltoAdige/Components/DamageComponent.h"
 #include "TrentinoAltoAdige/UI/PlayerHUD.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 // Sets default values
@@ -22,6 +23,8 @@ APlayerCharacter::APlayerCharacter()
 	//CombatComp
 	CombatSystemComponent = CreateDefaultSubobject<UCombatSystemComponent>("CombatSysComp");
 	WeaponHolding = EWeaponHoldingType::None;
+
+	DamageComponent = CreateDefaultSubobject<UDamageComponent>("DamageComponent");
 }
 
 // Called when the game starts or when spawned

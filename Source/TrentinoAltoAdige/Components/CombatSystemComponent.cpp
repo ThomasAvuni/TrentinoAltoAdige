@@ -2,6 +2,7 @@
 
 #include "CombatSystemComponent.h"
 
+#include "DamageComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
@@ -11,6 +12,7 @@
 #include "TrentinoAltoAdige/Characters/Player/PlayerCharacter.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
+#include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
 
 
 // Sets default values for this component's properties
@@ -184,6 +186,11 @@ void UCombatSystemComponent::PerformTrace()
 						Enemy->GetCharacterMesh()->GetAnimInstance()->Montage_Play(HitReactionFwdMontage);
 					}
 
+					FDamage sDamage;
+					sDamage.DamageAmount = Damage;
+					sDamage.ShouldDoDamage = !Enemy->IsParrying();
+
+					Cast<IGetComponentInterface>(Enemy)->GetDamageComponent()->TakeDamage(sDamage);
 					
 					// Memorizzo l'attore corrente colpito
 					CurrentHitActor = bIsTargeting ? CurrentTargetActor.Get() : HitActor;
