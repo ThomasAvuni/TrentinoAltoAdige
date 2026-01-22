@@ -11,10 +11,14 @@ void UPerfectParryWindow::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSeq
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 	OwnerRef = Cast<IGetComponentInterface>(MeshComp->GetOwner());
+	if (OwnerRef)
+		OwnerRef->SetCanMove(false);
 }
 
 void UPerfectParryWindow::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
 	const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
+	if (OwnerRef)
+		OwnerRef->SetCanMove(true);
 }

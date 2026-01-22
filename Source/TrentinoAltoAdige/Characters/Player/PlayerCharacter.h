@@ -98,7 +98,12 @@ public:
 	virtual void EquipWeapon() override {InternalEquipWeapon();}
 	virtual void UnEquipWeapon() override {InternalUnEquipWeapon();}
 	virtual bool IsWeaponEquipped() const override {return CombatSystemComponent->IsWeaponEquipped();}
-	virtual void SnapToTarget() override {InternalSnapToTarget();}
+	virtual void SetCanMove(bool val) override {bCanMove = val;}
+	virtual void SnapToTarget() override
+	{
+		CombatSystemComponent->SnapToTarget();
+		InternalSnapToTarget();
+	}
 	virtual void SetMovementToWalk() override { InternalSetMovementToWalk(); }
 	virtual void ResetMovement() override  { InternalResetMovement(); }
 	virtual bool IsParrying() override{return CombatSystemComponent->IsParrying();}
@@ -124,12 +129,14 @@ public:
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bCanMove = true;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsSprinting = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanSprint = true;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsPaused = false;	
-
+	
 	/*?-------------------|WEAPON | VARS|--------------------*/
 	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
 	TObjectPtr<class AWeaponBase> CurrentWeapon;
@@ -156,6 +163,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EWeaponHoldingType WeaponHolding;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "VFX")
+	TObjectPtr<class UNiagaraSystem> ShockwaveVFX;
 
 	/*?-------------------|Interaction|--------------------*/
 	void Interact();
@@ -170,10 +180,7 @@ protected:
 	
 	/*?-------------------|ANIMATIONS|--------------------*/
 	TObjectPtr<UAnimInstance> AnimInstance;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
-	TObjectPtr<UAnimMontage> PerfectParryMontage;
-		
+
 	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
 	TObjectPtr<UAnimMontage> ParryMontage;
 	

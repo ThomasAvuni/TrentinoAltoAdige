@@ -21,7 +21,11 @@ public:
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
 	virtual bool IsParrying() override{return CombatSystemComponent->IsParrying();}
 	virtual bool IsPerfectParrying() override {return CombatSystemComponent->IsPerfectParrying();}
-	virtual void SnapToTarget() override {InternalSnapToTarget();}
+	virtual void SnapToTarget() override
+	{
+		CombatSystemComponent->SnapToTarget();
+		InternalSnapToTarget();
+	}
 	virtual USkeletalMeshComponent* GetCharacterMesh() override {return GetMesh();}
 	virtual bool IsWeaponEquipped() const override;
 	virtual void EquipWeapon() override;
@@ -32,7 +36,7 @@ public:
 	virtual void HandleParry() override;
 	virtual UCombatSystemComponent* GetCombatSystemComponent() override {return CombatSystemComponent;}
 	virtual ETeam GetTeam() override {return Enemy;}
-
+	virtual void SetCanMove(bool val) override {bCanMove = val;}
 	// Sets default values for this character's properties
 	AEnemyBase();
 
@@ -40,6 +44,9 @@ public:
 	void InternalShowTarget();
 	UFUNCTION(BlueprintImplementableEvent)
 	void InternalHideTarget();
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bCanMove = true;
 	
 protected:
 	// Called when the game starts or when spawned

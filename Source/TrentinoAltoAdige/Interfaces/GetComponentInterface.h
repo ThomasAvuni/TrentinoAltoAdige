@@ -25,4 +25,5 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const = 0; 
 	virtual void SnapToTarget() = 0;
+	virtual void SetCanMove(bool val) = 0;
 };

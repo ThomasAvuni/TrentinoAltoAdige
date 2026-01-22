@@ -5,6 +5,7 @@
 #include "PlayerCharacter.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -51,7 +52,6 @@ void APlayerCharacter::BeginPlay()
 	}
 
 	AnimInstance = GetMesh()->GetAnimInstance();
-	
 }
 
 // Called to bind functionality to input
@@ -136,8 +136,10 @@ void APlayerCharacter::InternalTarget()
 
 void APlayerCharacter::InternalHandlePerfectParry_Implementation()
 {
-	if (PerfectParryMontage)
-		AnimInstance->Montage_Play(PerfectParryMontage);
+	if (ShockwaveVFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ShockwaveVFX, GetMesh()->GetSocketLocation(FName("VFX_PerfectParry")));
+	}
 }
 
 void APlayerCharacter::InternalHandleParry_Implementation()

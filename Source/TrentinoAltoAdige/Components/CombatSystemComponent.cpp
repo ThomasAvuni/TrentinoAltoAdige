@@ -36,12 +36,13 @@ void UCombatSystemComponent::BeginPlay()
 #pragma region Attack
 void UCombatSystemComponent::Attack()
 {
-	if (bIsParrying) return;
 	// Controllo rapido: se non è equipaggiata un'arma non procedere.
 	if (!OwnerRef->IsWeaponEquipped()) return;
 
 	// Se sto già attaccando e non è stato permesso il salvataggio combo, esco.
 	if (bIsAttacking && !bSaveCombo) return;
+
+	if (bIsParrying && !bIsPerfectParrying) return;
 
 	// Controllo che OwnerRef sia valido (null-check) e recupero l'arma.
 	if (OwnerRef)
@@ -53,7 +54,15 @@ void UCombatSystemComponent::Attack()
 			{
 				// Assicuro che l'arma sia attaccata alla socket della mano per l'attacco.
 				Weapon->AttachToComponent(OwnerRef->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->GetHandSocket());
-
+				
+				if (bIsPerfectParrying)
+				{
+					AnimInstance->StopAllMontages(0.15f);
+					AnimInstance->Montage_Play(Weapon->GetPerfectParryMontage());
+					bIsPerfectParrying = false;
+					return;
+				}
+				
 				// Ottengo gli attacchi a combo definiti dall'arma.
 				const TArray<FAttack>& ComboAttacks = Weapon->GetWeaponComboAttacks();
 				int32 CurrentAttackIndex = AttackIndex % ComboAttacks.Num();
@@ -91,7 +100,7 @@ void UCombatSystemComponent::PerformTrace()
 	{
 		FVector TraceStart = Weapon->GetMesh()->GetSocketLocation(FName("SwordBase"));
 		FVector TraceEnd = Weapon->GetMesh()->GetSocketLocation(FName("SwordTip"));
-		float fRadius = OwnerRef->GetTeam() == Player ? 20.f : 40.f; // raggio della sfera usata per lo sweep
+		float fRadius = 40.f; // raggio della sfera usata per lo sweep
 		FHitResult HitResult;
 #if  0
 		bool bDebugPersistent = false; // false = sparisce dopo 'fDebugLifeTime'
@@ -139,19 +148,6 @@ void UCombatSystemComponent::PerformTrace()
 					if (USoundBase* HitSound = Enemy->IsParrying() ? Weapon->GetWeaponBlockSound() : Weapon->GetWeaponHitSound())
 						UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitResult.ImpactPoint);
 
-					// Calcolo direzione del colpo rispetto alla forward vector del bersaglio
-					FVector HitActorForwardVector = HitActor->GetActorForwardVector();
-					FVector HitDirection = HitActor->GetActorLocation() - GetOwner()->GetActorLocation();
-					HitDirection.Normalize();
-					float DotProduct = FVector::DotProduct(HitActorForwardVector, HitDirection);
-					if (DotProduct > 0.6f)
-					{
-					}
-					else if (DotProduct < -0.6f)
-					{
-						Enemy->GetCharacterMesh()->GetAnimInstance()->Montage_Play(HitReactionFwdMontage);
-					}
-
 					float Damage;
 					if (Enemy->IsParrying())
 					{
@@ -160,6 +156,7 @@ void UCombatSystemComponent::PerformTrace()
 						if (DeltaTime <= PerfectParryWindow)
 						{
 							Damage = 0.f;
+							Enemy->GetCombatSystemComponent()->bIsPerfectParrying = true;
 							Enemy->HandlePerfectParry();
 						}
 						else
@@ -173,16 +170,38 @@ void UCombatSystemComponent::PerformTrace()
 					{
 						Damage = CalculateDamage(Weapon->GetWeaponBaseDamage());
 					}
+					
+					// Calcolo direzione del colpo rispetto alla forward vector del bersaglio
+					FVector HitActorForwardVector = HitActor->GetActorForwardVector();
+					FVector HitDirection = HitActor->GetActorLocation() - GetOwner()->GetActorLocation();
+					HitDirection.Normalize();
+					float DotProduct = FVector::DotProduct(HitActorForwardVector, HitDirection);
+					if (DotProduct > 0.6f)
+					{
+					}
+					else if (DotProduct < -0.6f && !Enemy->GetCombatSystemComponent()->IsPerfectParrying())
+					{
+						Enemy->GetCharacterMesh()->GetAnimInstance()->Montage_Play(HitReactionFwdMontage);
+					}
 
-					DBG_LINE("{}", Damage);
 					
 					// Memorizzo l'attore corrente colpito
 					CurrentHitActor = bIsTargeting ? CurrentTargetActor.Get() : HitActor;
-					// Applico hit stop temporale per effetto impatto
-					ApplyHitStop(GetOwner(), HitStopDuration, HitStopTimeDilation);
 				}
 			}
 		}
+	}
+}
+
+void UCombatSystemComponent::SnapToTarget() const
+{
+	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
+	{
+		FVector ForwardVector = Char->GetActorForwardVector();
+
+		float DashStrength = 550.f;
+		FVector LaunchVelocity = (ForwardVector * DashStrength) + FVector(0.f, 0.f, 80.f);
+		Char->LaunchCharacter(LaunchVelocity, true, true);
 	}
 }
 

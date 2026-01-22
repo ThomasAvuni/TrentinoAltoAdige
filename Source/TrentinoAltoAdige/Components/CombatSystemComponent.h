@@ -32,9 +32,10 @@ public:
 	void ApplyHitStop(AActor* Actor, float Duration, float TimeDilation) const;
 	UFUNCTION(BlueprintCallable)
 	bool IsParrying() const {return bIsParrying;}
-	bool IsPerfectParrying() const {return bIsPerectParrying;}
+	bool IsPerfectParrying() const {return bIsPerfectParrying;}
 	float CalculateDamage(float WeaponBaseDamage) const;
 	float GetParryStartTime() const {return ParryStartTime;}
+	void SnapToTarget() const;
 	/*?-------------------|ATTACKS | FUNCTIONS|--------------------*/
 	
 	/*?-------------------|TARGETING | FUNCTIONS|--------------------*/
@@ -97,7 +98,7 @@ private:
 	float PerfectParryWindow = 0.25f;
 	bool bIsParrying = false;
 	bool bCanPerfectParry = false;
-	bool bIsPerectParrying = false;
+	bool bIsPerfectParrying = false;
 	TSet<TObjectPtr<AActor>> EnemiesHitThisAttack;	//? Set of Actor Pointers hit this attack, so we don't hit the same Actor multiple times
 	UAnimMontage* CurrentAttackMontage;
 	/*?-------------------|ATTACK | VARS|--------------------*/
@@ -140,6 +141,11 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnWeaponFailedUpgrade OnWeaponFailedUpgrade;
 	/*?-------------------|Weapon Leveling | VARS|--------------------*/
+	
+	/*?-------------------|Ability | VARS|--------------------*/
+	
+	/*?-------------------|Ability | VARS|--------------------*/
+	
 private:
 
 	//TEMP
