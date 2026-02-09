@@ -35,7 +35,7 @@ public:
 	bool IsPerfectParrying() const {return bIsPerfectParrying;}
 	float CalculateDamage(float WeaponBaseDamage) const;
 	float GetParryStartTime() const {return ParryStartTime;}
-	void SnapToTarget() const;
+	void MoveToTarget() const;
 	/*?-------------------|ATTACKS | FUNCTIONS|--------------------*/
 	
 	/*?-------------------|TARGETING | FUNCTIONS|--------------------*/
@@ -95,12 +95,18 @@ private:
 	bool bSaveCombo = false;	//? Flag to save the combo in the Montages
 	float ParryStartTime = 0.f;
 	UPROPERTY(EditAnywhere, Category = "Parry")
-	float PerfectParryWindow = 0.25f;
+	float PerfectParryWindow = 0.65f;
 	bool bIsParrying = false;
+public:
 	bool bCanPerfectParry = false;
+private:
 	bool bIsPerfectParrying = false;
 	TSet<TObjectPtr<AActor>> EnemiesHitThisAttack;	//? Set of Actor Pointers hit this attack, so we don't hit the same Actor multiple times
 	UAnimMontage* CurrentAttackMontage;
+	const float MinDist = 85.f;         // distanza minima di riferimento
+	const float MaxDist = 150.f;        // distanza massima per scalare
+	const float MinDashStrength = 150.f; // forza dash minima (vicino)
+	const float MaxDashStrength = 550.f; // forza dash massima (lontano)
 	/*?-------------------|ATTACK | VARS|--------------------*/
 	
 	/*?-------------------|TARGETING | VARS|--------------------*/
@@ -147,12 +153,6 @@ public:
 	/*?-------------------|Ability | VARS|--------------------*/
 	
 private:
-
-	//TEMP
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* HitReactionFwdMontage;
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* HitBlockMontage;
 
 	/*?-------------------|Anims|--------------------*/
 	TObjectPtr<class UCharacterAnimInstance> AnimInstance;

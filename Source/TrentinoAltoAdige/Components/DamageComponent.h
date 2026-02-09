@@ -6,6 +6,14 @@
 
 #include "DamageComponent.generated.h"
 
+UENUM()
+enum EHitDirection
+{
+	HitNone,
+	Front,
+	Back,
+	Side
+};
 
 USTRUCT()
 struct FDamage
@@ -13,8 +21,8 @@ struct FDamage
 	GENERATED_BODY()
 	float DamageAmount;
 	bool ShouldDoDamage = true;
+	EHitDirection HitDirection;
 };
-
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class TRENTINOALTOADIGE_API UDamageComponent : public UActorComponent
@@ -27,35 +35,28 @@ public:
 
 	UFUNCTION(Blueprintable)
 	void Heal(float HealAmount);
-
 	float GetMaxHealth() const {return MaxHealth;}
-
 	float GetCurrentHealth() const {return CurrentHealth;}
-
 	bool GetIsDead() const {return IsDead;}
-
 	void TakeDamage(FDamage Damage);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeath);
 	FOnDeath OnDeath;
-	
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDamageResponse, EHitDirection, HitDirection);
+	FOnDamageResponse OnDamageResponse;
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, Category = "Health")
-	float MaxHealth = 100.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	float MaxHealth;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
 	float CurrentHealth;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
 	bool IsDead = false;
-
-
-
-
 
 };
 	

@@ -13,6 +13,7 @@
 
 #include "PlayerCharacter.generated.h"
 
+enum EHitDirection : int;
 class UDamageComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -98,8 +99,10 @@ public:
 	
 	/*?-------------------|INTERFACES|--------------------*/
 	virtual UDamageComponent* GetDamageComponent() const override {return DamageComponent;}
+	virtual UDamageComponent* GetDamageComponent() override {return DamageComponent;}
 	virtual UCombatSystemComponent* GetCombatSystemComponent() override {return CombatSystemComponent;}
 	virtual UCombatSystemComponent* GetCombatSystemComponent() const override {return CombatSystemComponent;}
+	virtual bool CanBeTargeted() override {return true;}
 	virtual AWeaponBase* GetWeapon() const override {return CurrentWeapon;}
 	virtual USkeletalMeshComponent* GetCharacterMesh() override {return GetMesh();}
 	virtual void EquipWeapon() override {InternalEquipWeapon();}
@@ -108,7 +111,7 @@ public:
 	virtual void SetCanMove(bool val) override {bCanMove = val;}
 	virtual void SnapToTarget() override
 	{
-		CombatSystemComponent->SnapToTarget();
+		CombatSystemComponent->MoveToTarget();
 		InternalSnapToTarget();
 	}
 	virtual void SetMovementToWalk() override { InternalSetMovementToWalk(); }
@@ -174,6 +177,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "VFX")
 	TObjectPtr<class UNiagaraSystem> ShockwaveVFX;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	USoundBase* ParryVoiceSound;
+	
+	UFUNCTION()
+	void OnDeath();
+	UFUNCTION()
+	void OnDamageResponse(EHitDirection HitResponse);
+		
 	/*?-------------------|Interaction|--------------------*/
 	void Interact();
 	UFUNCTION(BlueprintCallable)
@@ -190,6 +201,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
 	TObjectPtr<UAnimMontage> ParryMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Animations")
+	TObjectPtr<UAnimMontage> FrontHitMontage;
+		
+	UPROPERTY(EditDefaultsOnly, Category = "Animations")
+	TObjectPtr<UAnimMontage> ParryResponse;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Animations | Weapon")
 	TObjectPtr<UAnimMontage> EquipFromBackWeapon;

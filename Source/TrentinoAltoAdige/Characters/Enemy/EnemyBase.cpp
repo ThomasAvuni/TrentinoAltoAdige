@@ -3,6 +3,7 @@
 
 #include "EnemyBase.h"
 
+#include "Components/CapsuleComponent.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/Components/DamageComponent.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
@@ -57,10 +58,47 @@ void AEnemyBase::BeginPlay()
 	CombatSystemComponent->EquipWeapon(CurrentWeapon->GetIdleSocket(), EquipFromBackWeapon);
 
 	DamageComponent->OnDeath.AddDynamic(this, &AEnemyBase::OnDeath);
-	
+	DamageComponent->OnDamageResponse.AddDynamic(this, &AEnemyBase::OnDamageResponse);
 }
 
 void AEnemyBase::OnDeath()
 {
-	Destroy();
+	bCanBeTargeted = false;
+	
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	FVector BackwardDirection = -GetActorForwardVector();
+	GetMesh()->AddImpulse(BackwardDirection * 3500.f, NAME_None, true);
+	FTimerHandle T;
+	GetWorldTimerManager().SetTimer(T, [this]
+	{
+		if (CurrentWeapon)
+			CurrentWeapon->Destroy();
+		Destroy();
+	}, 5.f, false);
+}
+
+void AEnemyBase::OnDamageResponse(EHitDirection HitDirection)
+{
+	switch (HitDirection) {
+	case HitNone:
+		break;
+	case Front:
+		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+		{
+			if (FrontHitMontage)
+				AnimInstance->Montage_Play(FrontHitMontage);
+		}
+		break;
+	case Back:
+		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+		{
+			if (BackHitMontage)
+				AnimInstance->Montage_Play(BackHitMontage);
+		}
+		break;
+	case Side:
+		break;
+	}
 }

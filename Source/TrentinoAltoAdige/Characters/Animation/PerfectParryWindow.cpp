@@ -4,15 +4,16 @@
 #include "PerfectParryWindow.h"
 
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
+#include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
 
 void UPerfectParryWindow::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                                       float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
-	OwnerRef = Cast<IGetComponentInterface>(MeshComp->GetOwner());
+	OwnerRef = Cast<ICombatInterface>(MeshComp->GetOwner());
 	if (OwnerRef)
-		OwnerRef->SetCanMove(false);
+		OwnerRef->GetCombatSystemComponent()->bCanPerfectParry = true;
 }
 
 void UPerfectParryWindow::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -20,5 +21,5 @@ void UPerfectParryWindow::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSeque
 {
 	Super::NotifyEnd(MeshComp, Animation, EventReference);
 	if (OwnerRef)
-		OwnerRef->SetCanMove(true);
+		OwnerRef->GetCombatSystemComponent()->bCanPerfectParry = false;
 }

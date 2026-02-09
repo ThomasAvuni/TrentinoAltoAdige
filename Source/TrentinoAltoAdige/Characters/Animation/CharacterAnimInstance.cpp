@@ -3,7 +3,6 @@
 
 #include "CharacterAnimInstance.h"
 
-#include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
@@ -46,7 +45,10 @@ void UCharacterAnimInstance::AnimNotify_SaveAttack()
 void UCharacterAnimInstance::AnimNotify_ResetCombo()
 {
 	if (OwnerRef)
+	{
 		OwnerRef->GetCombatSystemComponent()->ResetCombo();
+		OwnerRef->SetCanMove(true);
+	}
 }
 
 void UCharacterAnimInstance::AnimNotify_SnapToTarget()
@@ -54,5 +56,21 @@ void UCharacterAnimInstance::AnimNotify_SnapToTarget()
 	if (OwnerRef)
 	{
 		OwnerRef->SnapToTarget();
+	}
+}
+
+void UCharacterAnimInstance::AnimNotify_DisableMovement()
+{
+	if (OwnerRef)
+	{
+		OwnerRef->SetCanMove(false);
+	}
+}
+
+void UCharacterAnimInstance::AnimNotify_ResetActorsThisAttack()
+{
+	if (OwnerRef)
+	{
+		OwnerRef->GetCombatSystemComponent()->ResetEnemiesHitThisAttack();
 	}
 }

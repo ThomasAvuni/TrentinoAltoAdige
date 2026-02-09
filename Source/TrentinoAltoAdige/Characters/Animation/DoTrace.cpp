@@ -11,7 +11,6 @@ void UDoTrace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* 
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 	OwnerRef = Cast<IGetComponentInterface>(MeshComp->GetOwner());
-
 }
 
 void UDoTrace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,

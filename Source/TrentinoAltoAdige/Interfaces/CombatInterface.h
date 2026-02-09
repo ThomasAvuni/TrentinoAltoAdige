@@ -7,6 +7,7 @@
 #include "CombatInterface.generated.h"
 
 class UCombatSystemComponent;
+class UDamageComponent; 
 
 UENUM()
 enum ETeam
@@ -48,5 +49,7 @@ public:
 	virtual void HandlePerfectParry() = 0;
 	virtual void HandleParry() = 0;
 	virtual UCombatSystemComponent* GetCombatSystemComponent() = 0;
+	virtual UDamageComponent* GetDamageComponent() = 0;
 	virtual ETeam GetTeam() = 0;
+	virtual bool CanBeTargeted() = 0;
 };

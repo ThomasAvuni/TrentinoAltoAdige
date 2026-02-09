@@ -4,19 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
-#include "PerfectParryWindow.generated.h"
+#include "SetCanMove.generated.h"
 
-class ICombatInterface;
 /**
  * 
  */
 UCLASS()
-class TRENTINOALTOADIGE_API UPerfectParryWindow : public UAnimNotifyState
+class TRENTINOALTOADIGE_API USetCanMove : public UAnimNotifyState
 {
 	GENERATED_BODY()
 public:
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
-	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
-private:
-	ICombatInterface* OwnerRef;
+	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;	
+	class IGetComponentInterface* OwnerRef;
 };

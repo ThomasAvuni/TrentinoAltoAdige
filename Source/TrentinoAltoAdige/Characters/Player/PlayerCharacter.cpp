@@ -54,6 +54,10 @@ void APlayerCharacter::BeginPlay()
 		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("SwordBackSocket"));
 	}
 
+	DamageComponent->OnDamageResponse.AddDynamic(this, &APlayerCharacter::OnDamageResponse);
+	DamageComponent->OnDeath.AddDynamic(this, &APlayerCharacter::OnDeath);
+	
+	CombatSystemComponent->EquipWeapon(CurrentWeapon->GetIdleSocket(), EquipFromBackWeapon);
 	AnimInstance = GetMesh()->GetAnimInstance();
 }
 
@@ -143,6 +147,10 @@ void APlayerCharacter::InternalHandlePerfectParry_Implementation()
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ShockwaveVFX, GetMesh()->GetSocketLocation(FName("VFX_PerfectParry")));
 	}
+	if (ParryVoiceSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ParryVoiceSound, GetActorLocation());
+	}
 }
 
 void APlayerCharacter::InternalHandleParry_Implementation()
@@ -181,6 +189,36 @@ void APlayerCharacter::ResetPlayerMovement()
 	{
 		FInputModeGameOnly Mode;
 		PlayerController->SetInputMode(Mode);
+	}
+}
+
+void APlayerCharacter::OnDeath()
+{
+	
+}
+
+void APlayerCharacter::OnDamageResponse(EHitDirection HitResponse)
+{
+	switch (HitResponse) {
+	case HitNone:
+		break;
+	case Front:
+		if (AnimInstance)
+		{
+			if (FrontHitMontage && (!CombatSystemComponent->IsParrying() && !CombatSystemComponent->IsPerfectParrying()))
+			{
+				AnimInstance->Montage_Play(FrontHitMontage);
+			}
+			else if (ParryResponse && (CombatSystemComponent->IsParrying() && CombatSystemComponent->IsPerfectParrying()))
+			{
+				AnimInstance->Montage_Play(ParryResponse);
+			}
+		}
+		break;
+	case Back:
+		break;
+	case Side:
+		break;
 	}
 }
 

@@ -7,13 +7,10 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Characters/Animation/CharacterAnimInstance.h"
 #include "TrentinoAltoAdige/Characters/Player/PlayerCharacter.h"
 #include "TrentinoAltoAdige/Interfaces/CombatInterface.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
-#include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
-
 
 // Sets default values for this component's properties
 UCombatSystemComponent::UCombatSystemComponent()
@@ -60,7 +57,7 @@ void UCombatSystemComponent::Attack()
 				if (bIsPerfectParrying)
 				{
 					AnimInstance->StopAllMontages(0.15f);
-					AnimInstance->Montage_Play(Weapon->GetPerfectParryMontage());
+					AnimInstance->Montage_Play(Weapon->GetPerfectParryCounterAttack());
 					bIsPerfectParrying = false;
 					return;
 				}
@@ -102,20 +99,40 @@ void UCombatSystemComponent::PerformTrace()
 	{
 		FVector TraceStart = Weapon->GetMesh()->GetSocketLocation(FName("SwordBase"));
 		FVector TraceEnd = Weapon->GetMesh()->GetSocketLocation(FName("SwordTip"));
-		float fRadius = 40.f; // raggio della sfera usata per lo sweep
+		float fRadius = 30.f; // raggio della sfera usata per lo sweep
 		FHitResult HitResult;
 #if  0
-		bool bDebugPersistent = false; // false = sparisce dopo 'fDebugLifeTime'
-		float fDebugLifeTime = 2.0f;   // Il disegno rimane per 2 secondi
+		bool bDebugPersistent = false;
+		float fDebugLifeTime = 2.0f;
 
-		// Disegna la sfera alla posizione di INIZIO (Blu)
-		DrawDebugSphere(GetWorld(), TraceStart, fRadius, 12, FColor::Blue, bDebugPersistent, fDebugLifeTime);
+		// 1. Calcoliamo il vettore direzione e la distanza totale
+		FVector TraceVector = TraceEnd - TraceStart;
+		float TraceDistance = TraceVector.Size();
 
-		// Disegna la sfera alla posizione di FINE (Blu)
-		DrawDebugSphere(GetWorld(), TraceEnd, fRadius, 12, FColor::Blue, bDebugPersistent, fDebugLifeTime);
+		// 2. Calcoliamo il punto centrale (Midpoint)
+		FVector CenterPoint = TraceStart + (TraceVector * 0.5f);
 
-		// Disegna la linea che collega Start ed End
-		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, bDebugPersistent, fDebugLifeTime);
+		// 3. Calcoliamo la rotazione
+		// La capsula di debug è orientata verticalmente (asse Z), quindi creiamo
+		// una rotazione che allinei l'asse Z alla direzione del nostro TraceVector.
+		FQuat CapsuleRotation = FRotationMatrix::MakeFromZ(TraceVector).ToQuat();
+
+		// 4. Calcoliamo la HalfHeight
+		// In Unreal, la HalfHeight include il raggio dell'emisfero.
+		// Quindi è: (Metà della distanza lineare) + (Raggio)
+		float HalfHeight = (TraceDistance * 0.5f) + fRadius;
+
+		// Disegna la capsula
+		DrawDebugCapsule(
+			GetWorld(), 
+			CenterPoint, 
+			HalfHeight, 
+			fRadius, 
+			CapsuleRotation, 
+			FColor::Blue, 
+			bDebugPersistent, 
+			fDebugLifeTime
+		);
 #endif
 		//Solo oggetti di tipo Pawn (es. nemici)
 		FCollisionObjectQueryParams CollisionObjectQueryParams;
@@ -149,7 +166,6 @@ void UCombatSystemComponent::PerformTrace()
 					// HitSound se presente
 					if (USoundBase* HitSound = Enemy->IsParrying() ? Weapon->GetWeaponBlockSound() : Weapon->GetWeaponHitSound())
 						UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitResult.ImpactPoint);
-
 					float Damage;
 					if (Enemy->IsParrying())
 					{
@@ -157,15 +173,20 @@ void UCombatSystemComponent::PerformTrace()
 						float DeltaTime = Time - Enemy->GetCombatSystemComponent()->GetParryStartTime();
 						if (DeltaTime <= PerfectParryWindow)
 						{
-							Damage = 0.f;
-							Enemy->GetCombatSystemComponent()->bIsPerfectParrying = true;
-							Enemy->HandlePerfectParry();
+							// if (bCanPerfectParry)
+							{
+								Enemy->GetCombatSystemComponent()->bIsPerfectParrying = true;
+								Enemy->HandlePerfectParry();
+							}
+							// else
+							// {
+							// 	Enemy->HandleParry();
+							// }
 						}
 						else
 						{
 							Enemy->HandleParry();
 						}
-
 						Damage = CalculateDamage(Weapon->GetWeaponBaseDamage()) * 0.5f;
 					}
 					else
@@ -175,22 +196,33 @@ void UCombatSystemComponent::PerformTrace()
 					
 					// Calcolo direzione del colpo rispetto alla forward vector del bersaglio
 					FVector HitActorForwardVector = HitActor->GetActorForwardVector();
-					FVector HitDirection = HitActor->GetActorLocation() - GetOwner()->GetActorLocation();
-					HitDirection.Normalize();
-					float DotProduct = FVector::DotProduct(HitActorForwardVector, HitDirection);
+					FVector Direction = HitActor->GetActorLocation() - GetOwner()->GetActorLocation();
+					Direction.Normalize();
+					float DotProduct = FVector::DotProduct(HitActorForwardVector, Direction);
+					EHitDirection HitDirection = HitNone;
 					if (DotProduct > 0.6f)
 					{
+						HitDirection = Back;
 					}
-					else if (DotProduct < -0.6f && !Enemy->GetCombatSystemComponent()->IsPerfectParrying())
+					else if (DotProduct < -0.6f)
 					{
-						Enemy->GetCharacterMesh()->GetAnimInstance()->Montage_Play(HitReactionFwdMontage);
+						HitDirection = Front;
 					}
 
+					// Calcola rotazione dal nemico al player (owner)
+					FVector EnemyLocation = HitActor->GetActorLocation();
+					FVector PlayerLocation = GetOwner()->GetActorLocation();
+					FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(EnemyLocation, PlayerLocation);
+					// Mantieni solo la rotazione Yaw per evitare tilt strani
+					FRotator CurrentRotation = HitActor->GetActorRotation();
+					FRotator NewRotation(0.f, LookAtRotation.Yaw, 0.f);
+					HitActor->SetActorRotation(NewRotation);
+					
 					FDamage sDamage;
 					sDamage.DamageAmount = Damage;
 					sDamage.ShouldDoDamage = !Enemy->IsParrying();
-
-					Cast<IGetComponentInterface>(Enemy)->GetDamageComponent()->TakeDamage(sDamage);
+					sDamage.HitDirection = HitDirection;
+					Enemy->GetDamageComponent()->TakeDamage(sDamage);
 					
 					// Memorizzo l'attore corrente colpito
 					CurrentHitActor = bIsTargeting ? CurrentTargetActor.Get() : HitActor;
@@ -200,15 +232,30 @@ void UCombatSystemComponent::PerformTrace()
 	}
 }
 
-void UCombatSystemComponent::SnapToTarget() const
+void UCombatSystemComponent::MoveToTarget() const
 {
 	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
 	{
-		FVector ForwardVector = Char->GetActorForwardVector();
+		if (CurrentHitActor.IsValid())
+		{
+			float Dist = FVector::Dist(CurrentHitActor->GetActorLocation(), Char->GetActorLocation());
+			if (Dist > MinDist)
+			{
+				FVector ForwardVector = Char->GetActorForwardVector();
 
-		float DashStrength = 550.f;
-		FVector LaunchVelocity = (ForwardVector * DashStrength) + FVector(0.f, 0.f, 80.f);
-		Char->LaunchCharacter(LaunchVelocity, true, true);
+				float NormalizedDist = FMath::Clamp((Dist - MinDist) / (MaxDist - MinDist), 0.f, 1.f);
+
+				float DashStrength = FMath::Lerp(MinDashStrength, MaxDashStrength, NormalizedDist);
+				FVector LaunchVelocity = (ForwardVector * DashStrength) + FVector(0.f, 0.f, 80.f);
+				Char->LaunchCharacter(LaunchVelocity, true, true);
+			}
+		}
+		else
+		{
+			FVector ForwardVector = Char->GetActorForwardVector();
+			FVector LaunchVelocity = (ForwardVector * MaxDashStrength) + FVector(0.f, 0.f, 80.f);
+			Char->LaunchCharacter(LaunchVelocity, true, true);
+		}
 	}
 }
 
@@ -252,7 +299,6 @@ float UCombatSystemComponent::CalculateDamage(float WeaponBaseDamage) const
 	float Multiplier = 1.f + (DamageMultiplierPerLevel * (CurrentWeaponLevel - 1));
 	return WeaponBaseDamage * Multiplier;
 }
-
 
 void UCombatSystemComponent::ApplyHitStop(AActor* Actor, float Duration, float TimeDilation) const
 {
@@ -326,6 +372,11 @@ void UCombatSystemComponent::StartTarget()
           // Evita di aggiungere duplicati
           if (!TargetActors.Contains(Actor))
           {
+          	if (ICombatInterface* Enemy = Cast<ICombatInterface>(Actor))
+          	{
+          		if (!Enemy->CanBeTargeted() || Enemy->GetDamageComponent()->GetIsDead())
+          			return;
+          	}
              TargetActors.AddUnique(Actor);
           
              // Logica Matematica per capire se il nemico è davanti a noi
@@ -366,51 +417,68 @@ void UCombatSystemComponent::StartTarget()
     // Se abbiamo trovato un bersaglio valido
     if (CurrentTargetActor.IsValid())
     {
-       ACharacter* Char = GetOwner<ACharacter>();
+	    ACharacter* Char = GetOwner<ACharacter>();
        
-       // Controllo distanza massima di sicurezza (15 metri)
-       float Dist = FVector::Dist(Char->GetActorLocation(), CurrentTargetActor->GetActorLocation());
-       if (Dist > 1500.f)
-       {
-          CurrentTargetActor = nullptr;
-          return;
-       }
+    	// Controllo distanza massima di sicurezza (15 metri)
+    	float Dist = FVector::Dist(Char->GetActorLocation(), CurrentTargetActor->GetActorLocation());
+    	if (Dist > 1500.f)
+    	{
+    		CurrentTargetActor = nullptr;
+    		return;
+    	}
+    	
        
-       // Mostra l'icona di lock-on sul nemico (se implementa l'interfaccia)
-       if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
-          Enemy->ShowTargetWidget();
+    	// Mostra l'icona di lock-on sul nemico (se implementa l'interfaccia)
+    	if (ICombatInterface* Enemy = Cast<ICombatInterface>(CurrentTargetActor))
+    	{
+    		if (Enemy->GetDamageComponent()->GetIsDead() || !Enemy->CanBeTargeted())
+    		{
+    			StopTarget();
+    			return;
+    		}
+    		
+    		Enemy->ShowTargetWidget();
           
-       // Disabilita l'input del mouse per la telecamera (Hard Lock)
-       Char->GetController()->SetIgnoreLookInput(true);
+    		// Disabilita l'input del mouse per la telecamera (Hard Lock)
+    		Char->GetController()->SetIgnoreLookInput(true);
        
-       // Avvia un Timer Loop (ogni 0.01s) per ruotare la telecamera/personaggio verso il nemico
-       GetWorld()->GetTimerManager().SetTimer(LerpToTargetActorTimer, [this, Char]
-       {
-          if (Char && CurrentTargetActor.IsValid()) // Aggiunto check validità CurrentTargetActor
-          {
-             float Dist = FVector::Dist(Char->GetActorLocation(), CurrentTargetActor->GetActorLocation());
-             // Se il nemico si allontana troppo, sgancia il target
-             if (Dist > 1500.f)
-             {
-                StopTarget();
-                return;
-             }
+    		// Avvia un Timer Loop (ogni 0.01s) per ruotare la telecamera/personaggio verso il nemico
+    		GetWorld()->GetTimerManager().SetTimer(LerpToTargetActorTimer, [this, Char, Enemy]
+			{
+    			if (Enemy)
+    			{
+    				if (Enemy->GetDamageComponent()->GetIsDead() || !Enemy->CanBeTargeted())
+    				{
+    					GetWorld()->GetTimerManager().ClearTimer(LerpToTargetActorTimer);
+    					StopTarget();
+					}
+    			}
+			   if (Char && CurrentTargetActor.IsValid()) // Aggiunto check validità CurrentTargetActor
+			   {
+				  float Dist = FVector::Dist(Char->GetActorLocation(), CurrentTargetActor->GetActorLocation());
+				  // Se il nemico si allontana troppo, sgancia il target
+				  if (Dist > 1500.f)
+				  {
+					 StopTarget();
+					 return;
+				  }
              
-             FVector TargetLocation = CurrentTargetActor->GetActorLocation();
-             // Aggiusta l'altezza del target point (mira al torso/piedi)
-             if (!bIsAttacking)
-             {
-                TargetLocation.Z -= 20.f;
-             }
+				  FVector TargetLocation = CurrentTargetActor->GetActorLocation();
+				  // Aggiusta l'altezza del target point (mira al torso/piedi)
+				  if (!bIsAttacking)
+				  {
+					 TargetLocation.Z -= 20.f;
+				  }
              
-             // Calcola la rotazione necessaria per guardare il nemico
-             FRotator LookAt = UKismetMathLibrary::FindLookAtRotation(GetOwner()->GetActorLocation(), TargetLocation);
+				  // Calcola la rotazione necessaria per guardare il nemico
+				  FRotator LookAt = UKismetMathLibrary::FindLookAtRotation(GetOwner()->GetActorLocation(), TargetLocation);
              
-             // Interpola fluidamente la rotazione corrente verso quella desiderata
-             FRotator InterpRot = FMath::RInterpTo(Char->GetControlRotation(), LookAt, GetWorld()->GetDeltaSeconds(), 10.f);
-             Char->GetController()->SetControlRotation(InterpRot);
-          }
-       }, 0.01f, true);
+				  // Interpola fluidamente la rotazione corrente verso quella desiderata
+				  FRotator InterpRot = FMath::RInterpTo(Char->GetControlRotation(), LookAt, GetWorld()->GetDeltaSeconds(), 10.f);
+				  Char->GetController()->SetControlRotation(InterpRot);
+			   }
+			}, 0.01f, true);
+    	}
     }
 }
 

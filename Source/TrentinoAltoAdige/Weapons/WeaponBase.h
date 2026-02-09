@@ -34,7 +34,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	const TArray<FAttack>& GetWeaponComboAttacks() const {return ComboAttacks;}
-	const TObjectPtr<UAnimMontage> GetPerfectParryMontage() const {return PerfectParryMontage;}
+	const TObjectPtr<UAnimMontage> GetPerfectParryCounterAttack() const {return PerfectParryMontage;}
 
 	const TObjectPtr<USoundBase>& GetWeaponHitSound() const {return HitSound;}
 	const TObjectPtr<USoundBase>& GetWeaponBlockSound() const {return HitBlockSound;}
