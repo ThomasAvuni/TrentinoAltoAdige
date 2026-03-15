@@ -42,6 +42,8 @@ void UCombatSystemComponent::Attack()
 	if (bIsAttacking && !bSaveCombo) return;
 
 	if (bIsParrying && !bIsPerfectParrying) return;
+	
+	EnemiesHitThisAttack.Empty();
 
 	// Controllo che OwnerRef sia valido (null-check) e recupero l'arma.
 	if (OwnerRef)
@@ -73,6 +75,8 @@ void UCombatSystemComponent::Attack()
 					if (AttackSound)
 						UGameplayStatics::PlaySound2D(GetWorld(), AttackSound, 0.65f);
 
+					EnemiesHitThisAttack.Empty();
+					
 					// Stato: sto attaccando, reset del flag save combo.
 					bIsAttacking = true;
 					bSaveCombo = false;
@@ -153,7 +157,7 @@ void UCombatSystemComponent::PerformTrace()
 				// Uso l'interfaccia di combattimento per applicare reazioni/danni
 				if (ICombatInterface* Enemy = Cast<ICombatInterface>(HitActor))
 				{
-					if (Enemy->GetTeam() == OwnerRef->GetTeam()) return;
+					// if (Enemy->GetTeam() == OwnerRef->GetTeam()) return;
 					
 					// Registro l'attore colpito per evitare clash multipli
 					EnemiesHitThisAttack.Add(HitActor);
@@ -225,7 +229,7 @@ void UCombatSystemComponent::PerformTrace()
 					Enemy->GetDamageComponent()->TakeDamage(sDamage);
 					
 					// Memorizzo l'attore corrente colpito
-					CurrentHitActor = bIsTargeting ? CurrentTargetActor.Get() : HitActor;
+					CurrentHitActor = bIsTargeting && CurrentTargetActor.IsValid() ? CurrentTargetActor.Get() : HitActor;
 				}
 			}
 		}

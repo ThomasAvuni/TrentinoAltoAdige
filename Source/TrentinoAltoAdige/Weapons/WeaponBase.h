@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "WeaponBase.generated.h"
 
+class UItemDataAsset;
+
 USTRUCT(BlueprintType)
 struct FAttack
 {
@@ -52,7 +54,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	
 	UPROPERTY(EditDefaultsOnly)
 	USkeletalMeshComponent* WeaponMesh;
 	

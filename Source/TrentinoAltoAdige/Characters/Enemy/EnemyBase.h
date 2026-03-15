@@ -48,7 +48,6 @@ public:
 	void InternalShowTarget();
 	UFUNCTION(BlueprintImplementableEvent)
 	void InternalHideTarget();
-	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanMove = true;
 	

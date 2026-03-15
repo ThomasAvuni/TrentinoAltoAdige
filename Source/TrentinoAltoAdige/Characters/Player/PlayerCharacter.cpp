@@ -1,7 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "PlayerCharacter.h"
 #include "PlayerCharacter.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
@@ -12,7 +10,7 @@
 #include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/Components/DamageComponent.h"
-#include "TrentinoAltoAdige/UI/PlayerHUD.h"
+#include "TrentinoAltoAdige/Components/InventoryComponent.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -25,6 +23,7 @@ APlayerCharacter::APlayerCharacter()
 	WeaponHolding = EWeaponHoldingType::None;
 
 	DamageComponent = CreateDefaultSubobject<UDamageComponent>("DamageComponent");
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
 }
 
 // Called when the game starts or when spawned

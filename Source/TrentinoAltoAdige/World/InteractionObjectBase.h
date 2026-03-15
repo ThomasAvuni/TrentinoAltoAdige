@@ -19,6 +19,8 @@ public:
 	// Sets default values for this actor's properties
 	AInteractionObjectBase();
 
+	int32 GetInteractableId() const {return InteractableGETId;}
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -31,8 +33,10 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly)
 	UWidgetComponent* InteractionWidget;
-	
 	bool bHovered = false;
+
+	UPROPERTY(EditAnywhere, Category = "GET");
+	int32 InteractableGETId = 0;
 	
 public:
 	virtual void Interact(AActor* Interactor) override;

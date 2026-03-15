@@ -13,6 +13,7 @@
 
 #include "PlayerCharacter.generated.h"
 
+class UInventoryComponent;
 enum EHitDirection : int;
 class UDamageComponent;
 class UCameraComponent;
@@ -74,6 +75,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Combat")
 	UDamageComponent* DamageComponent;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Inventory")
+	UInventoryComponent* InventoryComponent;
 	
 public:	
 	// Called to bind functionality to input

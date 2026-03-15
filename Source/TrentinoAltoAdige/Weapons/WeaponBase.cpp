@@ -5,7 +5,6 @@
 
 #include "TrentinoAltoAdige/DebugMacros.h"
 
-
 // Sets default values
 AWeaponBase::AWeaponBase()
 {
