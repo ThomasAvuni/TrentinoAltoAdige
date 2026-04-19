@@ -58,6 +58,15 @@ void APlayerCharacter::BeginPlay()
 	
 	CombatSystemComponent->EquipWeapon(CurrentWeapon->GetIdleSocket(), EquipFromBackWeapon);
 	AnimInstance = GetMesh()->GetAnimInstance();
+	
+	if (InventoryComponent)
+	{
+		InventoryComponent->AddItem({.ItemDescription = CurrentWeapon->GetItemDescription(), .Quantity = 1});
+		AItemBase* Pot = GetWorld()->SpawnActor<AItemBase>(PotionClass, FVector::Zero(), FRotator::ZeroRotator);
+		InventoryComponent->AddItem({.ItemDescription = Pot->GetItemDescription(), .Quantity = 8});
+		Pot->Destroy();
+	}
+	
 }
 
 // Called to bind functionality to input

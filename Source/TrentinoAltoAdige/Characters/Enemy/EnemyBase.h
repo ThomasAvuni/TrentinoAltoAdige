@@ -12,6 +12,17 @@
 enum EHitDirection : int;
 class UCombatSystemComponent;
 
+UENUM(BlueprintType)
+enum class EEnemyState : uint8
+{
+	Idle        UMETA(DisplayName = "Idle"),
+	Patrolling  UMETA(DisplayName = "Patrolling"),
+	Alerted     UMETA(DisplayName = "Alerted"),
+	Chasing     UMETA(DisplayName = "Chasing"),
+	Attacking   UMETA(DisplayName = "Attacking"),
+	Dead        UMETA(DisplayName = "Dead")
+};
+
 UCLASS()
 class TRENTINOALTOADIGE_API AEnemyBase : public ACharacter, public ICombatInterface, public IGetComponentInterface
 {
@@ -51,6 +62,32 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanMove = true;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Config")
+	class UBehaviorTree* BehaviorTree;
+	
+	// ─── Patrol ───────────────────────────────────────────────
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Enemy|Patrol")
+	TArray<AActor*> PatrolPoints;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Patrol")
+	float PatrolWaitTime = 2.0f;
+
+	// ─── Combattimento ────────────────────────────────────────
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Combat")
+	float AttackRange = 150.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Combat")
+	float DetectionRange = 800.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Combat")
+	float AggroRange = 400.0f;
+	
+	UFUNCTION(BlueprintPure, Category = "Enemy|State")
+	EEnemyState GetEnemyState() const { return CurrentState; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Enemy|State")
+	void SetEnemyState(EEnemyState NewState);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -80,11 +117,12 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
 	TObjectPtr<UAnimMontage> BackHitMontage;
-	
+
 	UFUNCTION()
 	void OnDeath();
 	UFUNCTION()
 	void OnDamageResponse(EHitDirection HitDirection);
 	
-	
+private:
+	EEnemyState CurrentState = EEnemyState::Idle;
 };

@@ -30,4 +30,5 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual UDamageComponent* GetDamageComponent() const = 0; 
+	
 };

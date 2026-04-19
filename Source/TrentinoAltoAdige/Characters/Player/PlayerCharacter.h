@@ -13,6 +13,7 @@
 
 #include "PlayerCharacter.generated.h"
 
+class AItemBase;
 class UInventoryComponent;
 enum EHitDirection : int;
 class UDamageComponent;
@@ -77,6 +78,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Inventory")
 	UInventoryComponent* InventoryComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory Items")
+	TSubclassOf<AItemBase> PotionClass;
 	
 public:	
 	// Called to bind functionality to input

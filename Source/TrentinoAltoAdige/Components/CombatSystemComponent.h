@@ -112,7 +112,9 @@ private:
 	/*?-------------------|TARGETING | VARS|--------------------*/
 	TArray<TObjectPtr<AActor>> TargetActors;
 	bool bIsTargeting = false;
+public:
 	TWeakObjectPtr<AActor> CurrentTargetActor;
+private:
 	FTimerHandle LerpToTargetActorTimer;
 	int32 TargetIndex = 0;
 	/*?-------------------|TARGETING | VARS|--------------------*/

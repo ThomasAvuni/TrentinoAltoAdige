@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "PlayerHUD.generated.h"
 
+class UInventoryWidget;
 class UMainHUD;
 class APlayerCharacter;
 class UWeaponUpgradeWidget;
@@ -31,12 +32,18 @@ protected:
 	TObjectPtr<UWeaponUpgradeWidget> WeaponUpgradeWidget;
 	UPROPERTY()
 	TObjectPtr<UMainHUD> MainHUD;
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 
 private:
 	TObjectPtr<APlayerCharacter> PlayerRef;
+	TObjectPtr<UInventoryWidget> InventoryWidget;
 	UFUNCTION()
 	void HandleWeaponLevelUpdate(int32 NewLevel);
 	
 	UFUNCTION()
 	void HandleWeaponFailedUpgrade(FString Message);
+	
+	UFUNCTION()
+	
 };

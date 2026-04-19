@@ -3,6 +3,7 @@
 
 #include "PlayerHUD.h"
 
+#include "InventoryWidget.h"
 #include "MainHUD.h"
 #include "WeaponUpgradeWidget.h"
 #include "Blueprint/UserWidget.h"
@@ -22,6 +23,11 @@ void APlayerHUD::BeginPlay()
 		{
 			MainHUD->AddToViewport();
 		}
+	}
+
+	if (InventoryWidgetClass)
+	{
+		InventoryWidget = CreateWidget<UInventoryWidget>(GetWorld(), InventoryWidgetClass);
 	}
 	
 	if (PlayerRef)

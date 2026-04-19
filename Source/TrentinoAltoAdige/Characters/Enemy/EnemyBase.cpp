@@ -46,6 +46,11 @@ AEnemyBase::AEnemyBase()
 	DamageComponent = CreateDefaultSubobject<UDamageComponent>("DamageComponent");
 }
 
+void AEnemyBase::SetEnemyState(EEnemyState NewState)
+{
+	
+}
+
 // Called when the game starts or when spawned
 void AEnemyBase::BeginPlay()
 {

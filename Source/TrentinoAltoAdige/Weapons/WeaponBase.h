@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TrentinoAltoAdige/World/Items/ItemBase.h"
 #include "WeaponBase.generated.h"
 
 class UItemDataAsset;
@@ -21,7 +22,7 @@ struct FAttack
 };
 
 UCLASS()
-class TRENTINOALTOADIGE_API AWeaponBase : public AActor
+class TRENTINOALTOADIGE_API AWeaponBase : public AItemBase
 {
 
 private:
@@ -51,6 +52,7 @@ public:
 	const FName& GetIdleSocket() const { return IdleSocket; }
 	const FName& GetHandSocket() const { return HandSocket; }
 	const FName& GetBackSocket() const { return BackSocket; }
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -85,4 +87,5 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Sockets")
 	FName BackSocket;
+	
 };
