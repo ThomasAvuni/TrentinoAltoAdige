@@ -44,6 +44,4 @@ private:
 	UFUNCTION()
 	void HandleWeaponFailedUpgrade(FString Message);
 	
-	UFUNCTION()
-	
 };
