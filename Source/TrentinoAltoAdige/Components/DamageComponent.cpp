@@ -2,7 +2,6 @@
 
 #include "DamageComponent.h"
 
-#include "../DebugMacros.h"
 
 // Sets default values for this component's properties
 UDamageComponent::UDamageComponent()
@@ -12,6 +11,8 @@ UDamageComponent::UDamageComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	CurrentHealth = MaxHealth;
+	
+	OnHealthChanged.Broadcast(CurrentHealth);
 }
 
 // Called when the game starts
@@ -19,12 +20,14 @@ void UDamageComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentHealth = MaxHealth;
+	OnHealthChanged.Broadcast(CurrentHealth);
 }
 
 void UDamageComponent::Heal(float HealAmount)
 {
 	CurrentHealth += HealAmount;
 	CurrentHealth = FMath::Clamp(CurrentHealth, 0.f, MaxHealth); 
+	OnHealthChanged.Broadcast(CurrentHealth);
 }
 
 void UDamageComponent::TakeDamage(FDamage Damage)
@@ -35,8 +38,8 @@ void UDamageComponent::TakeDamage(FDamage Damage)
 	
 	CurrentHealth -= Damage.DamageAmount;
 	OnDamageResponse.Broadcast(Damage.HitDirection);
-	//Broadcast del delegate OnHealthChanged
-
+	OnHealthChanged.Broadcast(CurrentHealth);
+	
 	if (CurrentHealth<=0)
 	{
 		IsDead = true;

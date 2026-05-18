@@ -43,7 +43,7 @@ public:
 	// Sets default values for this component's properties
 	UInventoryComponent();
 
-	int32 MaxSlots = 20;
+	int32 MaxSlots = 42;
 	
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 	UPROPERTY(BlueprintAssignable)

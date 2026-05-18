@@ -4,17 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "ItemBase.h"
+#include "TrentinoAltoAdige/Interfaces/UsableItem.h"
 #include "Potion.generated.h"
 
 UCLASS()
-class TRENTINOALTOADIGE_API APotion : public AItemBase
+class TRENTINOALTOADIGE_API APotion : public AItemBase, public IUsableItem
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this actor's properties
 	APotion();
-
+	virtual void Interact(AActor* Interactor) override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

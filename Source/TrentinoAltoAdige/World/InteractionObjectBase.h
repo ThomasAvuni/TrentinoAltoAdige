@@ -37,9 +37,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "GET");
 	int32 InteractableGETId = 0;
-	
+		
 public:
-	virtual void Interact(AActor* Interactor) override;
 	virtual void StopInteract() override;
 	virtual void ShowInteractionWidget() override;
 	virtual void HideInteractionWidget() override;

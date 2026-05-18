@@ -3,6 +3,9 @@
 
 #include "InventoryComponent.h"
 
+#include "TrentinoAltoAdige/Interfaces/UsableItem.h"
+#include "TrentinoAltoAdige/World/Items/Potion.h"
+
 
 // Sets default values for this component's properties
 UInventoryComponent::UInventoryComponent()
@@ -10,6 +13,7 @@ UInventoryComponent::UInventoryComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
+	RegisterItemClass("potion", APotion::StaticClass());
 }
 
 void UInventoryComponent::DebugPrintInventory() const
@@ -154,7 +158,6 @@ FInventoryItem UInventoryComponent::GetItemFromID(FString ItemID)
 
 bool UInventoryComponent::UseItemAtIndex(int32 Index)
 {
-
 	if (InventorySlots.IsValidIndex(Index))
 	{
 		FInventoryItem& Item = InventorySlots[Index];
@@ -166,10 +169,13 @@ bool UInventoryComponent::UseItemAtIndex(int32 Index)
 				Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 				if (AItemBase* ItemActor = GetWorld()->SpawnActor<AItemBase>(ItemClass, FTransform::Identity, Params))
 				{
-					ItemActor->UseItem(ItemActor);
-					RemoveItemAtIndex(Index, 1);
-					ItemActor->Destroy();
-					return true;
+					if (IUsableItem* ItemInterface = Cast<IUsableItem>(ItemActor))
+					{
+						ItemInterface->UseItem(GetOwner());
+						RemoveItemAtIndex(Index, 1);
+						ItemActor->Destroy();
+						return true;
+					}
 				}
 			}
 		}

@@ -36,10 +36,6 @@ void AInteractionObjectBase::BeginPlay()
 	
 }
 
-void AInteractionObjectBase::Interact(AActor* Interactor)
-{
-}
-
 void AInteractionObjectBase::StopInteract()
 {
 }

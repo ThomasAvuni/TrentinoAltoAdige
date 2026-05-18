@@ -22,7 +22,7 @@ struct FAttack
 };
 
 UCLASS()
-class TRENTINOALTOADIGE_API AWeaponBase : public AItemBase
+class TRENTINOALTOADIGE_API AWeaponBase : public AActor
 {
 
 private:

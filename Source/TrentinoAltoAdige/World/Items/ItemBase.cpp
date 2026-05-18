@@ -2,16 +2,15 @@
 
 #include "ItemBase.h"
 
+#include "TrentinoAltoAdige/DebugMacros.h"
+#include "TrentinoAltoAdige/Characters/Player/PlayerCharacter.h"
+
 // Sets default values
 AItemBase::AItemBase()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-}
-
-void AItemBase::UseItem(AActor* User)
-{
 }
 
 // Called when the game starts or when spawned

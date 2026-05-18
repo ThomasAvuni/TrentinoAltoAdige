@@ -13,9 +13,10 @@
 
 #include "PlayerCharacter.generated.h"
 
+class UInventoryWidget;
 class AItemBase;
 class UInventoryComponent;
-enum EHitDirection : int;
+enum EHitDirection;
 class UDamageComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -105,6 +106,7 @@ public:
 	bool bIsInShop = false;
 	
 	/*?-------------------|INTERFACES|--------------------*/
+	virtual UInventoryComponent* GetInventoryComponent() const override{return InventoryComponent;}
 	virtual UDamageComponent* GetDamageComponent() const override {return DamageComponent;}
 	virtual UDamageComponent* GetDamageComponent() override {return DamageComponent;}
 	virtual UCombatSystemComponent* GetCombatSystemComponent() override {return CombatSystemComponent;}
@@ -144,6 +146,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetPlayerMovement();
 	
+	void InitInventoryWidget(UInventoryWidget* InInventoryWidget);
+
+	UFUNCTION(BlueprintCallable)
+	void ToggleInventory();
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bCanMove = true;
@@ -153,6 +160,8 @@ protected:
 	bool bCanSprint = true;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsPaused = false;	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool bCanAttack = true;
 	
 	/*?-------------------|WEAPON | VARS|--------------------*/
 	UPROPERTY(BlueprintReadWrite, Category = "Weapon")
@@ -186,6 +195,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")
 	USoundBase* ParryVoiceSound;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UInventoryWidget* InventoryWidget;
 	
 	UFUNCTION()
 	void OnDeath();

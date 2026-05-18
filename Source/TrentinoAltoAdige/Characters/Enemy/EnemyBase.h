@@ -9,6 +9,7 @@
 #include "TrentinoAltoAdige/Interfaces/GetComponentInterface.h"
 #include "EnemyBase.generated.h"
 
+class UWidget;
 enum EHitDirection : int;
 class UCombatSystemComponent;
 
@@ -29,6 +30,7 @@ class TRENTINOALTOADIGE_API AEnemyBase : public ACharacter, public ICombatInterf
 	GENERATED_BODY()
 
 public:
+	virtual UInventoryComponent* GetInventoryComponent() const override {return nullptr;}
 	virtual UDamageComponent* GetDamageComponent() const override {return DamageComponent;}
 	virtual UDamageComponent* GetDamageComponent() override {return DamageComponent;}
 	virtual AWeaponBase* GetWeapon() const override;
@@ -118,11 +120,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
 	TObjectPtr<UAnimMontage> BackHitMontage;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void HideHealthbar();
+	
 	UFUNCTION()
 	void OnDeath();
 	UFUNCTION()
 	void OnDamageResponse(EHitDirection HitDirection);
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnHealthChanged(float NewHealth);
 private:
 	EEnemyState CurrentState = EEnemyState::Idle;
 };

@@ -246,9 +246,7 @@ void UCombatSystemComponent::MoveToTarget() const
 			if (Dist > MinDist)
 			{
 				FVector ForwardVector = Char->GetActorForwardVector();
-
 				float NormalizedDist = FMath::Clamp((Dist - MinDist) / (MaxDist - MinDist), 0.f, 1.f);
-
 				float DashStrength = FMath::Lerp(MinDashStrength, MaxDashStrength, NormalizedDist);
 				FVector LaunchVelocity = (ForwardVector * DashStrength) + FVector(0.f, 0.f, 80.f);
 				Char->LaunchCharacter(LaunchVelocity, true, true);

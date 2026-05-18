@@ -7,6 +7,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TrentinoAltoAdige/Interfaces/UsableItem.h"
+#include "TrentinoAltoAdige/World/InteractionObjectBase.h"
 #include "ItemBase.generated.h"
 
 UENUM(BlueprintType)
@@ -60,7 +62,7 @@ struct FItemDescription
 };
 
 UCLASS()
-class TRENTINOALTOADIGE_API AItemBase : public AActor
+class TRENTINOALTOADIGE_API AItemBase : public AInteractionObjectBase
 {
 	GENERATED_BODY()
 
@@ -70,9 +72,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	const FItemDescription& GetItemDescription() const {return ItemDescription;}
-	
-	//Funzione base che verrà implementata per ogni sottoclasse, che viene chiamata quando si prova a usare l'oggetto
-	virtual void UseItem(AActor* User);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

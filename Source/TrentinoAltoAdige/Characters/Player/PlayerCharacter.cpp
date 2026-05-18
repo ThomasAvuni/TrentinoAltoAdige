@@ -5,12 +5,14 @@
 #include "EnhancedInputComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TrentinoAltoAdige/DebugMacros.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/Components/DamageComponent.h"
 #include "TrentinoAltoAdige/Components/InventoryComponent.h"
+#include "TrentinoAltoAdige/UI/InventoryWidget.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -61,7 +63,6 @@ void APlayerCharacter::BeginPlay()
 	
 	if (InventoryComponent)
 	{
-		InventoryComponent->AddItem({.ItemDescription = CurrentWeapon->GetItemDescription(), .Quantity = 1});
 		AItemBase* Pot = GetWorld()->SpawnActor<AItemBase>(PotionClass, FVector::Zero(), FRotator::ZeroRotator);
 		InventoryComponent->AddItem({.ItemDescription = Pot->GetItemDescription(), .Quantity = 8});
 		Pot->Destroy();
@@ -138,7 +139,8 @@ void APlayerCharacter::InternalUnEquipWeapon()
 
 void APlayerCharacter::InternalAttack()
 {
-	CombatSystemComponent->Attack();
+	if (bCanAttack)
+		CombatSystemComponent->Attack();
 }
 
 #pragma endregion
@@ -200,9 +202,46 @@ void APlayerCharacter::ResetPlayerMovement()
 	}
 }
 
+void APlayerCharacter::InitInventoryWidget(UInventoryWidget* InInventoryWidget)
+{
+	if (InInventoryWidget)
+	{
+		InventoryWidget = InInventoryWidget;
+	}
+}
+
+void APlayerCharacter::ToggleInventory()
+{
+	if (InventoryWidget)
+	{
+		if (InventoryWidget->IsInViewport())
+		{
+			InventoryWidget->RemoveFromParent();
+			GetWorld()->GetFirstPlayerController()->SetInputMode(FInputModeGameOnly());
+			GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(false);
+		}
+		else
+		{
+			InventoryWidget->AddToViewport();
+			FInputModeUIOnly Mode;
+			Mode.SetWidgetToFocus(InventoryWidget->TakeWidget());
+			Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			GetWorld()->GetFirstPlayerController()->SetInputMode(Mode);
+			GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(true);
+			GetCharacterMovement()->StopMovementImmediately();
+		}
+	}
+}
+
 void APlayerCharacter::OnDeath()
 {
-	
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		DisableInput(PC);
+		GetMesh()->SetSimulatePhysics(true);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 void APlayerCharacter::OnDamageResponse(EHitDirection HitResponse)

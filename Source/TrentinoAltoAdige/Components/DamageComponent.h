@@ -15,11 +15,11 @@ enum EHitDirection
 	Side
 };
 
-USTRUCT()
+USTRUCT(Blueprintable)
 struct FDamage
 {
 	GENERATED_BODY()
-	float DamageAmount;
+	float DamageAmount = 15;
 	bool ShouldDoDamage = true;
 	EHitDirection HitDirection;
 };
@@ -35,15 +35,22 @@ public:
 
 	UFUNCTION(Blueprintable)
 	void Heal(float HealAmount);
+	UFUNCTION(BlueprintCallable)
 	float GetMaxHealth() const {return MaxHealth;}
+	UFUNCTION(BlueprintCallable)
 	float GetCurrentHealth() const {return CurrentHealth;}
+	UFUNCTION(BlueprintCallable)
 	bool GetIsDead() const {return IsDead;}
+	UFUNCTION(BlueprintCallable)
 	void TakeDamage(FDamage Damage);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeath);
 	FOnDeath OnDeath;
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDamageResponse, EHitDirection, HitDirection);
 	FOnDamageResponse OnDamageResponse;
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float, NewHealth);
+	UPROPERTY(BlueprintAssignable)
+	FOnHealthChanged OnHealthChanged;
 
 protected:
 	// Called when the game starts

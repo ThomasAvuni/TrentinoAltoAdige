@@ -6,6 +6,7 @@
 #include "UObject/Interface.h"
 #include "GetComponentInterface.generated.h"
 
+class UInventoryComponent;
 class UDamageComponent;
 class UCombatSystemComponent;
 // This class does not need to be modified.
@@ -30,5 +31,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual UDamageComponent* GetDamageComponent() const = 0; 
+	UFUNCTION(BlueprintCallable)
+	virtual UInventoryComponent* GetInventoryComponent() const = 0; 
 	
 };

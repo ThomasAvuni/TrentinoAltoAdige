@@ -16,11 +16,14 @@ class TRENTINOALTOADIGE_API UMainHUD : public UCommonUserWidget
 {
 	GENERATED_BODY()
 public:
-	
+	UFUNCTION(BlueprintImplementableEvent)
+	UHealthBar* GetHealthBar() const;
 	UFUNCTION(BlueprintCallable)
 	void PushMenu(TSubclassOf<UCommonActivatableWidget> MenuClass);
 	UFUNCTION(BlueprintCallable)
 	UCommonActivatableWidgetStack* GetMenuStack() {return MenuStack;}
+	UFUNCTION(BlueprintImplementableEvent)
+	void UpdateHealthText(float NewHealth, float MaxHealth);
 protected:
 	UPROPERTY(meta = (BindWidget))
 	UCommonActivatableWidgetStack* MenuStack;

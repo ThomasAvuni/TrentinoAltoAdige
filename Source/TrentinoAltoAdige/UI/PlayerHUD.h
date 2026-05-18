@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "PlayerHUD.generated.h"
 
+class UHealthBar;
 class UInventoryWidget;
 class UMainHUD;
 class APlayerCharacter;
@@ -32,9 +33,14 @@ protected:
 	TObjectPtr<UWeaponUpgradeWidget> WeaponUpgradeWidget;
 	UPROPERTY()
 	TObjectPtr<UMainHUD> MainHUD;
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UInventoryWidget> ClassInventoryWidget;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UHealthBar> HealthBarClass;
+	UHealthBar* HealthBar;
+	
 private:
 	TObjectPtr<APlayerCharacter> PlayerRef;
 	TObjectPtr<UInventoryWidget> InventoryWidget;
@@ -44,4 +50,6 @@ private:
 	UFUNCTION()
 	void HandleWeaponFailedUpgrade(FString Message);
 	
+	UFUNCTION()
+	void HandleHealthChanged(float NewHealth);
 };

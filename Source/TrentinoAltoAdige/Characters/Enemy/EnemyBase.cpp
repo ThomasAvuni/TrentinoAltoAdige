@@ -4,6 +4,7 @@
 #include "EnemyBase.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Components/Widget.h"
 #include "TrentinoAltoAdige/Components/CombatSystemComponent.h"
 #include "TrentinoAltoAdige/Components/DamageComponent.h"
 #include "TrentinoAltoAdige/Weapons/WeaponBase.h"
@@ -64,12 +65,13 @@ void AEnemyBase::BeginPlay()
 
 	DamageComponent->OnDeath.AddDynamic(this, &AEnemyBase::OnDeath);
 	DamageComponent->OnDamageResponse.AddDynamic(this, &AEnemyBase::OnDamageResponse);
+	DamageComponent->OnHealthChanged.AddDynamic(this, &AEnemyBase::OnHealthChanged);
 }
 
 void AEnemyBase::OnDeath()
 {
 	bCanBeTargeted = false;
-	
+	HideHealthbar();
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
